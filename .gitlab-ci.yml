@@ -69,7 +69,7 @@ prepare:sources:
 build:x86-64-v2:
   <<: *build_centos7
   stage: build
-  needs: []
+  needs: ["prepare:sources"]
   variables:
     ARCH_LEVEL: x86-64-v2
     GIT_STRATEGY: none
@@ -81,7 +81,7 @@ build:x86-64-v2:
 build:x86-64-v3:
   <<: *build_alma9
   stage: build
-  needs: []
+  needs: ["prepare:sources"]
   allow_failure: true
   variables:
     ARCH_LEVEL: x86-64-v3
@@ -94,7 +94,7 @@ build:x86-64-v3:
 build:x86-64-v4:
   <<: *build_alma9
   stage: build
-  needs: []
+  needs: ["prepare:sources"]
   allow_failure: true
   variables:
     ARCH_LEVEL: x86-64-v4
