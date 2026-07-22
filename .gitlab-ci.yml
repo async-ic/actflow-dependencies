@@ -1,0 +1,210 @@
+# Builds 3 portable variants of the same dependency tree, differing only by
+# base image + -march level (component versions are unchanged):
+#   v2-centos7 : CentOS 7,    x86-64-v2 (baseline toolchain)
+#   v3-alma9   : AlmaLinux 9, x86-64-v3
+#   v4-alma9   : AlmaLinux 9, x86-64-v4
+
+stages:
+  - prepare
+  - build
+  - test
+  - release
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_DEPTH: 1
+  ACT_HOME: ${CI_PROJECT_DIR}/opt/act
+
+# sources tarball required for copyleft-license compliance
+prepare:sources:
+  stage: prepare
+  image: centos:7.2.1511
+  needs: []
+  script:
+    - bash packaging/001-pack_sources.sh
+  artifacts:
+    paths:
+      - actflow_dependencies_sources*.tar.gz
+    expire_in: 1 week
+
+.build_centos7: &build_centos7
+  image: centos:7.2.1511
+  cache:
+    key: "yum-$CI_JOB_NAME"
+    paths:
+      - /var/cache/yum
+  script:
+    - source packaging/centos7_ci_build_environment.sh
+    - bash packaging/centos7_install_build_system.sh
+    - source packaging/centos7_ci_build_environment.sh
+    - bash packaging/003-build.sh
+    - touch "actflow_dependency_build_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
+    - bash packaging/005-pack_binaries.sh
+
+.build_alma9: &build_alma9
+  image: almalinux:9
+  cache:
+    key: "dnf-$CI_JOB_NAME"
+    paths:
+      - /var/cache/dnf
+  script:
+    - source packaging/alma9_ci_build_environment.sh
+    - bash packaging/alma9_install_build_system.sh
+    - source packaging/alma9_ci_build_environment.sh
+    - bash packaging/003-build.sh
+    - touch "actflow_dependency_build_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
+    - bash packaging/005-pack_binaries.sh
+
+build:v2-centos7:
+  <<: *build_centos7
+  stage: build
+  needs: []
+  variables:
+    ARCH_LEVEL: x86-64-v2
+  artifacts:
+    paths:
+      - actflow_dependencies_package_*.tar.gz
+    expire_in: 1 week
+
+build:v3-alma9:
+  <<: *build_alma9
+  stage: build
+  needs: []
+  variables:
+    ARCH_LEVEL: x86-64-v3
+  artifacts:
+    paths:
+      - actflow_dependencies_package_*.tar.gz
+    expire_in: 1 week
+
+build:v4-alma9:
+  <<: *build_alma9
+  stage: build
+  needs: []
+  variables:
+    ARCH_LEVEL: x86-64-v4
+  artifacts:
+    paths:
+      - actflow_dependencies_package_*.tar.gz
+    expire_in: 1 week
+
+# distro portability matrix: each packaged variant tested against target OSes
+.test_script: &test_script
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    # opensuse/leap base image ships without tar/gzip/make
+    - if command -v zypper >/dev/null 2>&1; then zypper --non-interactive install -y make tar gzip; fi
+  script:
+    - mkdir install
+    - tar -C install -xf actflow_dependencies_package_*.tar.gz
+    - export ACT_HOME=$(pwd)/install/act
+    - bash packaging/006-test.sh
+
+test:v2-centos7:
+  <<: *test_script
+  stage: test
+  needs: ["build:v2-centos7"]
+  parallel:
+    matrix:
+      - DISTRO_IMAGE:
+          - centos:7.2.1511
+          - rockylinux/rockylinux:8
+          - debian:stable
+          - debian:oldstable
+          - debian:oldoldstable
+          - ubuntu:22.04
+          - ubuntu:20.04
+          - ubuntu:18.04
+          - ubuntu:16.04
+          - opensuse/leap:15
+          - archlinux/archlinux:latest
+          - fedora:20
+          - fedora:latest
+  image: $DISTRO_IMAGE
+
+test:v3-alma9:
+  <<: *test_script
+  stage: test
+  needs: ["build:v3-alma9"]
+  parallel:
+    matrix:
+      - DISTRO_IMAGE:
+          - almalinux:9
+          - rockylinux/rockylinux:8
+          - debian:stable
+          - debian:oldstable
+          - debian:oldoldstable
+          - ubuntu:22.04
+          - ubuntu:20.04
+          - ubuntu:18.04
+          - ubuntu:16.04
+          - opensuse/leap:15
+          - archlinux/archlinux:latest
+          - fedora:20
+          - fedora:latest
+  image: $DISTRO_IMAGE
+
+test:v4-alma9:
+  <<: *test_script
+  stage: test
+  needs: ["build:v4-alma9"]
+  parallel:
+    matrix:
+      - DISTRO_IMAGE:
+          - almalinux:9
+          - rockylinux/rockylinux:8
+          - debian:stable
+          - debian:oldstable
+          - debian:oldoldstable
+          - ubuntu:22.04
+          - ubuntu:20.04
+          - ubuntu:18.04
+          - ubuntu:16.04
+          - opensuse/leap:15
+          - archlinux/archlinux:latest
+          - fedora:20
+          - fedora:latest
+  image: $DISTRO_IMAGE
+
+# uses script: not the declarative release: keyword - that only does $VAR substitution, can't run head/rename commands below
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  needs:
+    - prepare:sources
+    - build:v2-centos7
+    - build:v3-alma9
+    - build:v4-alma9
+    - test:v2-centos7
+    - test:v3-alma9
+    - test:v4-alma9
+  script:
+    - |
+      PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${CI_COMMIT_SHORT_SHA}"
+      upload() {
+        # $1 = local file (glob-matched, date/hash-suffixed), $2 = stable published name
+        local_file=$(ls $1)
+        curl --fail --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --upload-file "${local_file}" \
+          "${PACKAGE_BASE_URL}/$2"
+      }
+      upload "actflow_dependencies_sources_*.tar.gz" "actflow_dependencies_sources.tar.gz"
+      upload "actflow_dependencies_package_x86-64-v2_*.tar.gz" "actflow_dependencies_package_x86-64-v2.tar.gz"
+      upload "actflow_dependencies_package_x86-64-v3_*.tar.gz" "actflow_dependencies_package_x86-64-v3.tar.gz"
+      upload "actflow_dependencies_package_x86-64-v4_*.tar.gz" "actflow_dependencies_package_x86-64-v4.tar.gz"
+
+      RELEASE_TAG="$(head -n 1 packaging/release_tag.md)"
+      RELEASE_TITLE="$(head -n 1 packaging/release_titel.md)"
+      RELEASE_DESCRIPTION="$(head -n 1 packaging/release_description.md)"
+
+      release-cli create \
+        --tag-name "${RELEASE_TAG}" \
+        --name "${RELEASE_TITLE}" \
+        --description "${RELEASE_DESCRIPTION}" \
+        --assets-link "{\"name\":\"actflow_dependencies_sources.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_sources.tar.gz\"}" \
+        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}" \
+        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
+        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
