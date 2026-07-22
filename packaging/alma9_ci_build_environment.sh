@@ -1,6 +1,4 @@
 echo "environment variables "
-source scl_source enable devtoolset-11 || echo "devtoolset11"
-echo "devtoolset-11 active"
 
 if [ -d "../build_scripts" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
@@ -16,7 +14,7 @@ fi
 echo "ACT_HOME $ACT_HOME"
 
 if [ -z $ARCH_LEVEL ]; then
-    export ARCH_LEVEL=x86-64-v2
+    export ARCH_LEVEL=x86-64-v3
 fi
 echo "ARCH_LEVEL $ARCH_LEVEL"
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,9 +23,9 @@ echo
 
 if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
-# save the version number for reference 
-touch "actflow_dependency_build_${CIRCLE_SHA1:0:6}_$(date '+%Y-%m-%d')"
+# save the version number for reference
+touch "actflow_dependency_build_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
 
 tar --exclude-vcs \
--czf actflow_dependencies_sources_${CIRCLE_SHA1:0:6}_$(date '+%Y-%m-%d').tar.gz ./*
+-czf actflow_dependencies_sources_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz ./*
 
