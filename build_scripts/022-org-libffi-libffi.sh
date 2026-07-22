@@ -16,13 +16,19 @@
 
 echo "#############################"
 echo "# libffi"
-cd $EDA_SRC/org-libffi-libffi
+# frozen for centos7 (ABI_LEVEL 3.10): newer libffi drops support for it
+case "$ABI_LEVEL" in
+	3.10) LIBFFI_SRC=org-libffi-libffi-abi_3.10 ;;
+	*)    LIBFFI_SRC=org-libffi-libffi ;;
+esac
+
+cd $EDA_SRC/$LIBFFI_SRC
 cp LICENSE $ACT_HOME/license/LICENSE_org-libffi-libffi
 ./autogen.sh || exit 1
 ./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
 sed -i 's/\/..\/lib64//' Makefile
 cd x86*
 sed -i 's/\/..\/lib64//' Makefile
-cd $EDA_SRC/org-libffi-libffi
+cd $EDA_SRC/$LIBFFI_SRC
 make -j || exit 1
 make install || exit 1

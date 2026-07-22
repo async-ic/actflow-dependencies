@@ -98,3 +98,6 @@
 	path = src/umn-karypislab-metis
 	url = https://github.com/KarypisLab/METIS.git
 	shallow = true
+[submodule "src/org-libffi-libffi-abi_3.10"]
+	path = src/org-libffi-libffi-abi_3.10
+	url = https://github.com/libffi/libffi.git

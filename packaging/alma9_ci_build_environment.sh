@@ -18,6 +18,12 @@ if [ -z $ARCH_LEVEL ]; then
 fi
 echo "ARCH_LEVEL $ARCH_LEVEL"
 
+# baseline kernel/glibc ABI this image targets, used to pick frozen vs. current deps
+if [ -z $ABI_LEVEL ]; then
+    export ABI_LEVEL=5.14
+fi
+echo "ABI_LEVEL $ABI_LEVEL"
+
 # guard: re-sourcing runs twice per job, don't stack PATH/flags
 if [ -z $ACTFLOW_ENV_LOADED ]; then
     export PATH=${ACT_HOME}/bin:${PATH}
