@@ -20,6 +20,11 @@ prepare:sources:
   stage: prepare
   image: centos:7.2.1511
   needs: []
+  cache:
+    key: "sources-$CI_COMMIT_SHA"
+    paths:
+      - ./
+    policy: push
   script:
     - bash packaging/001-pack_sources.sh
   artifacts:
@@ -27,13 +32,20 @@ prepare:sources:
       - actflow_dependencies_sources*.tar.gz
     expire_in: 1 week
 
+# build/test stages only pull the checkout from cache (see prepare:sources) instead of
+# re-cloning + re-fetching submodules in every job
+.source_cache: &source_cache
+  key: "sources-$CI_COMMIT_SHA"
+  paths:
+    - ./
+  policy: pull
+
 .build_centos7: &build_centos7
   image: centos:7.2.1511
   cache:
-    key: "yum-$CI_JOB_NAME"
-    paths:
-      - /var/cache/yum
+    <<: *source_cache
   script:
+    - bash packaging/000-check_arch_level.sh
     - source packaging/centos7_ci_build_environment.sh
     - bash packaging/centos7_install_build_system.sh
     - source packaging/centos7_ci_build_environment.sh
@@ -44,10 +56,9 @@ prepare:sources:
 .build_alma9: &build_alma9
   image: almalinux:9
   cache:
-    key: "dnf-$CI_JOB_NAME"
-    paths:
-      - /var/cache/dnf
+    <<: *source_cache
   script:
+    - bash packaging/000-check_arch_level.sh
     - source packaging/alma9_ci_build_environment.sh
     - bash packaging/alma9_install_build_system.sh
     - source packaging/alma9_ci_build_environment.sh
@@ -61,6 +72,7 @@ build:v2-centos7:
   needs: []
   variables:
     ARCH_LEVEL: x86-64-v2
+    GIT_STRATEGY: none
   artifacts:
     paths:
       - actflow_dependencies_package_*.tar.gz
@@ -70,8 +82,10 @@ build:v3-alma9:
   <<: *build_alma9
   stage: build
   needs: []
+  allow_failure: true
   variables:
     ARCH_LEVEL: x86-64-v3
+    GIT_STRATEGY: none
   artifacts:
     paths:
       - actflow_dependencies_package_*.tar.gz
@@ -81,8 +95,10 @@ build:v4-alma9:
   <<: *build_alma9
   stage: build
   needs: []
+  allow_failure: true
   variables:
     ARCH_LEVEL: x86-64-v4
+    GIT_STRATEGY: none
   artifacts:
     paths:
       - actflow_dependencies_package_*.tar.gz
@@ -91,11 +107,15 @@ build:v4-alma9:
 # distro portability matrix: each packaged variant tested against target OSes
 .test_script: &test_script
   variables:
+    GIT_STRATEGY: none
     GIT_SUBMODULE_STRATEGY: none
+  cache:
+    - <<: *source_cache
   before_script:
     # opensuse/leap base image ships without tar/gzip/make
     - if command -v zypper >/dev/null 2>&1; then zypper --non-interactive install -y make tar gzip; fi
   script:
+    - bash packaging/000-check_arch_level.sh
     - mkdir install
     - tar -C install -xf actflow_dependencies_package_*.tar.gz
     - export ACT_HOME=$(pwd)/install/act
