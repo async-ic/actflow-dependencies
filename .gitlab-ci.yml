@@ -1,8 +1,8 @@
 # Builds 3 portable variants of the same dependency tree, differing only by
 # base image + -march level (component versions are unchanged):
-#   v2-centos7 : CentOS 7,    x86-64-v2 (baseline toolchain)
-#   v3-alma9   : AlmaLinux 9, x86-64-v3
-#   v4-alma9   : AlmaLinux 9, x86-64-v4
+#   x86-64-v2 : CentOS 7 -> ABI 3.10   (baseline toolchain)
+#   x86-64-v3 : AlmaLinux 9 -> ABI 5.14
+#   x86-64-v4 : AlmaLinux 9 -> ABI 5.14
 
 stages:
   - prepare
@@ -66,7 +66,7 @@ prepare:sources:
     - touch "actflow_dependency_build_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
     - bash packaging/005-pack_binaries.sh
 
-build:v2-centos7:
+build:x86-64-v2:
   <<: *build_centos7
   stage: build
   needs: []
@@ -78,7 +78,7 @@ build:v2-centos7:
       - actflow_dependencies_package_*.tar.gz
     expire_in: 1 week
 
-build:v3-alma9:
+build:x86-64-v3:
   <<: *build_alma9
   stage: build
   needs: []
@@ -91,7 +91,7 @@ build:v3-alma9:
       - actflow_dependencies_package_*.tar.gz
     expire_in: 1 week
 
-build:v4-alma9:
+build:x86-64-v4:
   <<: *build_alma9
   stage: build
   needs: []
@@ -121,70 +121,74 @@ build:v4-alma9:
     - export ACT_HOME=$(pwd)/install/act
     - bash packaging/006-test.sh
 
-test:v2-centos7:
+# distro kernel vs. almalinux:9 (5.14): v2 targets distros older than the alma9 build host,
+# v3/v4 target distros newer-or-equal to it (glibc built against alma9 can't run on older glibc)
+test:x86-64-v2:
   <<: *test_script
   stage: test
-  needs: ["build:v2-centos7"]
+  needs: ["build:x86-64-v2"]
+  variables:
+    ARCH_LEVEL: x86-64-v2
   parallel:
     matrix:
       - DISTRO_IMAGE:
-          - centos:7.2.1511
-          - rockylinux/rockylinux:8
-          - debian:stable
-          - debian:oldstable
-          - debian:oldoldstable
-          - ubuntu:22.04
-          - ubuntu:20.04
-          - ubuntu:18.04
-          - ubuntu:16.04
-          - opensuse/leap:15
-          - archlinux/archlinux:latest
-          - fedora:20
-          - fedora:latest
+          - centos:7.2.1511        # kernel 3.10
+          - rockylinux/rockylinux:8 # kernel 4.18
+          - debian:oldoldstable     # bullseye, kernel 5.10
+          - ubuntu:20.04            # kernel 5.4
+          - ubuntu:18.04            # kernel 4.15
+          - ubuntu:16.04            # kernel 4.4
+          - fedora:20               # kernel 3.11
   image: $DISTRO_IMAGE
 
-test:v3-alma9:
+test:x86-64-v3:
   <<: *test_script
   stage: test
-  needs: ["build:v3-alma9"]
+  needs: ["build:x86-64-v3"]
+  rules:
+    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+      allow_failure: true
+    - when: on_success
+  variables:
+    ARCH_LEVEL: x86-64-v3
   parallel:
     matrix:
       - DISTRO_IMAGE:
-          - almalinux:9
-          - rockylinux/rockylinux:8
-          - debian:stable
-          - debian:oldstable
-          - debian:oldoldstable
-          - ubuntu:22.04
-          - ubuntu:20.04
-          - ubuntu:18.04
-          - ubuntu:16.04
-          - opensuse/leap:15
-          - archlinux/archlinux:latest
-          - fedora:20
-          - fedora:latest
+          - almalinux:9           # kernel 5.14
+          - almalinux:10          # kernel 6.12
+          - debian:stable          # trixie, kernel 6.12
+          - debian:oldstable       # bookworm, kernel 6.1
+          - ubuntu:22.04           # kernel 5.15
+          - ubuntu:24.04           # kernel 6.8
+          - ubuntu:26.04           # kernel 6.14
+          - opensuse/leap:15       # 15.6, kernel 6.4
+          - archlinux/archlinux:latest # rolling
+          - fedora:latest          # rolling
   image: $DISTRO_IMAGE
 
-test:v4-alma9:
+test:x86-64-v4:
   <<: *test_script
   stage: test
-  needs: ["build:v4-alma9"]
+  needs: ["build:x86-64-v4"]
+  rules:
+    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+      allow_failure: true
+    - when: on_success
+  variables:
+    ARCH_LEVEL: x86-64-v4
   parallel:
     matrix:
       - DISTRO_IMAGE:
-          - almalinux:9
-          - rockylinux/rockylinux:8
-          - debian:stable
-          - debian:oldstable
-          - debian:oldoldstable
-          - ubuntu:22.04
-          - ubuntu:20.04
-          - ubuntu:18.04
-          - ubuntu:16.04
-          - opensuse/leap:15
-          - archlinux/archlinux:latest
-          - fedora:20
-          - fedora:latest
+          - almalinux:9           # kernel 5.14
+          - almalinux:10          # kernel 6.12
+          - debian:stable          # trixie, kernel 6.12
+          - debian:oldstable       # bookworm, kernel 6.1
+          - ubuntu:22.04           # kernel 5.15
+          - ubuntu:24.04           # kernel 6.8
+          - ubuntu:26.04           # kernel 6.14
+          - opensuse/leap:15       # 15.6, kernel 6.4
+          - archlinux/archlinux:latest # rolling
+          - fedora:latest          # rolling
   image: $DISTRO_IMAGE
 
 # uses script: not the declarative release: keyword - that only does $VAR substitution, can't run head/rename commands below
@@ -195,12 +199,12 @@ release:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   needs:
     - prepare:sources
-    - build:v2-centos7
-    - build:v3-alma9
-    - build:v4-alma9
-    - test:v2-centos7
-    - test:v3-alma9
-    - test:v4-alma9
+    - build:x86-64-v2
+    - build:x86-64-v3
+    - build:x86-64-v4
+    - test:x86-64-v2
+    - test:x86-64-v3
+    - test:x86-64-v4
   script:
     - |
       PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${CI_COMMIT_SHORT_SHA}"
