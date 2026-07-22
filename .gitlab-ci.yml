@@ -15,16 +15,12 @@ variables:
   GIT_SUBMODULE_DEPTH: 1
   ACT_HOME: ${CI_PROJECT_DIR}/opt/act
 
-# sources tarball required for copyleft-license compliance
+# sources tarball required for copyleft-license compliance, and doubles as the single
+# checkout build/test stages extract instead of re-cloning + re-fetching submodules
 prepare:sources:
   stage: prepare
   image: centos:7.2.1511
   needs: []
-  cache:
-    key: "sources-$CI_COMMIT_SHA"
-    paths:
-      - ./
-    policy: push
   script:
     - bash packaging/001-pack_sources.sh
   artifacts:
@@ -32,18 +28,10 @@ prepare:sources:
       - actflow_dependencies_sources*.tar.gz
     expire_in: 1 week
 
-# build/test stages only pull the checkout from cache (see prepare:sources) instead of
-# re-cloning + re-fetching submodules in every job
-.source_cache: &source_cache
-  key: "sources-$CI_COMMIT_SHA"
-  paths:
-    - ./
-  policy: pull
-
 .build_centos7: &build_centos7
   image: centos:7.2.1511
-  cache:
-    <<: *source_cache
+  before_script:
+    - tar --exclude-vcs -xzf actflow_dependencies_sources_*.tar.gz
   script:
     - bash packaging/000-check_arch_level.sh
     - source packaging/centos7_ci_build_environment.sh
@@ -55,8 +43,8 @@ prepare:sources:
 
 .build_alma9: &build_alma9
   image: almalinux:9
-  cache:
-    <<: *source_cache
+  before_script:
+    - tar --exclude-vcs -xzf actflow_dependencies_sources_*.tar.gz
   script:
     - bash packaging/000-check_arch_level.sh
     - source packaging/alma9_ci_build_environment.sh
@@ -109,11 +97,10 @@ build:x86-64-v4:
   variables:
     GIT_STRATEGY: none
     GIT_SUBMODULE_STRATEGY: none
-  cache:
-    - <<: *source_cache
   before_script:
     # opensuse/leap base image ships without tar/gzip/make
     - if command -v zypper >/dev/null 2>&1; then zypper --non-interactive install -y make tar gzip; fi
+    - tar --exclude-vcs -xzf actflow_dependencies_sources_*.tar.gz
   script:
     - bash packaging/000-check_arch_level.sh
     - mkdir install
@@ -126,7 +113,7 @@ build:x86-64-v4:
 test:x86-64-v2:
   <<: *test_script
   stage: test
-  needs: ["build:x86-64-v2"]
+  needs: ["prepare:sources", "build:x86-64-v2"]
   variables:
     ARCH_LEVEL: x86-64-v2
   parallel:
@@ -144,7 +131,7 @@ test:x86-64-v2:
 test:x86-64-v3:
   <<: *test_script
   stage: test
-  needs: ["build:x86-64-v3"]
+  needs: ["prepare:sources", "build:x86-64-v3"]
   rules:
     - if: '$DISTRO_IMAGE =~ /^archlinux\//'
       allow_failure: true
@@ -169,7 +156,7 @@ test:x86-64-v3:
 test:x86-64-v4:
   <<: *test_script
   stage: test
-  needs: ["build:x86-64-v4"]
+  needs: ["prepare:sources", "build:x86-64-v4"]
   rules:
     - if: '$DISTRO_IMAGE =~ /^archlinux\//'
       allow_failure: true
