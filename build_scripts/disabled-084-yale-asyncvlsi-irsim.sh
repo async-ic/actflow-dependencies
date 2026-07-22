@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,22 +14,24 @@
 # limitations under the License.
 #
 
+# DISABLED: unused, was src/yale-asyncvlsi-irsim
+# https://github.com/asyncvlsi/irsim.git @ 3813495e55a21a024e62e21bd6993fac068a61b9
+
 echo "############ Requires X11 and OpenGL #################"
 if [ -z $BUILD_GUI ]; then
     exit 0;
 fi
 
 echo "#############################"
-echo "# tk"
+echo "# irsim"
 
-if [ ! -f $EDA_SRC/org-tcltk-tcl/unix/tclConfig.sh ]; then
-  cd $EDA_SRC/org-tcltk-tcl/unix
-  ./configure --prefix=$ACT_HOME
-fi
+cd $EDA_SRC/yale-asyncvlsi-irsim
+# license
+cp COPYRIGHT $ACT_HOME/license/LICENSE_yale-asyncvlsi-irsim
 
-cd $EDA_SRC/org-tcltk-tk
-cp license.terms $ACT_HOME/license/LICENSE_org-tcltk-tk
-cd unix
-./configure --prefix=$ACT_HOME --with-tcl=$EDA_SRC/org-tcltk-tcl/unix CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib"  || exit 1
-make -j || exit 1
+./configure --prefix=$ACT_HOME CFLAGS="-g -I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+make || exit 1
 make install || exit 1
+
+sed -i 's/\/root\/project\/act/\${ACT_HOME}/g' $ACT_HOME/bin/irsim
+

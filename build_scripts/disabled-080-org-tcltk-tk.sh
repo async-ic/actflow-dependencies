@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,21 +14,24 @@
 # limitations under the License.
 #
 
+# DISABLED: orphaned, only consumers (magic, irsim) are also disabled.
+
 echo "############ Requires X11 and OpenGL #################"
 if [ -z $BUILD_GUI ]; then
     exit 0;
 fi
 
 echo "#############################"
-echo "# magic"
+echo "# tk"
 
-cd $EDA_SRC/yale-asyncvlsi-magic
-# license
-cp LICENSE $ACT_HOME/license/LICENSE_yale-asyncvlsi-magic
+if [ ! -f $EDA_SRC/org-tcltk-tcl/unix/tclConfig.sh ]; then
+  cd $EDA_SRC/org-tcltk-tcl/unix
+  ./configure --prefix=$ACT_HOME
+fi
 
-./configure --prefix=$ACT_HOME CFLAGS="-g -I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
-make || exit 1
+cd $EDA_SRC/org-tcltk-tk
+cp license.terms $ACT_HOME/license/LICENSE_org-tcltk-tk
+cd unix
+./configure --prefix=$ACT_HOME --with-tcl=$EDA_SRC/org-tcltk-tcl/unix CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib"  || exit 1
+make -j || exit 1
 make install || exit 1
-
-sed -i 's/TCL_MAG_DIR=\${CAD_ROOT}\/magic\/tcl/TCL_MAG_DIR=\${ACT_HOME}\/lib\/magic\/tcl/' $ACT_HOME/bin/magic
-sed -i 's/\/root\/project\/act/\${ACT_HOME}/g' $ACT_HOME/bin/magic

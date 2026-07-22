@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# DISABLED: unused, was src/yale-rmanohar-abc
+# https://github.com/rmanohar/abc.git @ 54758a10095bce564f499ea975bee6abba647674
 
 echo "#############################"
 echo "# ABC"

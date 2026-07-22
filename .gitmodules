@@ -1,26 +1,26 @@
 [submodule "src/org-kitware-cmake"]
 	path = src/org-kitware-cmake
-	url = ../../Kitware/CMake.git
+	url = https://github.com/Kitware/CMake.git
 	shallow = true
 [submodule "src/org-xianyi-openblas"]
 	path = src/org-xianyi-openblas
-	url = ../../xianyi/OpenBLAS.git
+	url = https://github.com/xianyi/OpenBLAS.git
 	shallow = true
 [submodule "src/tamu-drtimothyaldendavis-suitesparse"]
 	path = src/tamu-drtimothyaldendavis-suitesparse
-	url = ../../DrTimothyAldenDavis/SuiteSparse.git
+	url = https://github.com/DrTimothyAldenDavis/SuiteSparse.git
 	shallow = true
 [submodule "src/sandia-trilinos-trilinos"]
 	path = src/sandia-trilinos-trilinos
-	url = ../../trilinos/Trilinos.git
+	url = https://github.com/trilinos/Trilinos.git
 	shallow = true
 [submodule "src/sandia-xyce-xyce"]
 	path = src/sandia-xyce-xyce
-	url = ../../xyce/xyce.git
+	url = https://github.com/xyce/xyce.git
 	shallow = true
 [submodule "src/org-madler-zlib"]
 	path = src/org-madler-zlib
-	url = ../../madler/zlib.git
+	url = https://github.com/madler/zlib.git
 	shallow = true
 [submodule "src/org-debian-ncurses"]
 	path = src/org-debian-ncurses
@@ -30,49 +30,33 @@
 	path = src/org-debian-libedit
 	url = https://salsa.debian.org/debian/libedit.git
 	shallow = true
-[submodule "src/org-yosyshq-yosys"]
-	path = src/org-yosyshq-yosys
-	url = ../../yosyshq/yosys.git
-	shallow = true
-[submodule "src/yale-rmanohar-abc"]
-	path = src/yale-rmanohar-abc
-	url = ../../rmanohar/abc.git
-	shallow = true
 [submodule "src/org-tcltk-tcl"]
 	path = src/org-tcltk-tcl
-	url = ../../tcltk/tcl.git
+	url = https://github.com/tcltk/tcl.git
 	shallow = true
 [submodule "src/org-tcltk-tk"]
 	path = src/org-tcltk-tk
-	url = ../../tcltk/tk.git
+	url = https://github.com/tcltk/tk.git
 	shallow = true
 [submodule "src/org-libffi-libffi"]
 	path = src/org-libffi-libffi
-	url = ../../libffi/libffi.git
+	url = https://github.com/libffi/libffi.git
 	shallow = true
 [submodule "src/org-boostorg-boost"]
 	path = src/org-boostorg-boost
-	url = ../../boostorg/boost.git
+	url = https://github.com/boostorg/boost.git
 	shallow = true
 [submodule "src/org-numactl-numactl"]
 	path = src/org-numactl-numactl
-	url = ../../numactl/numactl.git
+	url = https://github.com/numactl/numactl.git
 	shallow = true
 [submodule "src/org-fmtlib-fmt"]
 	path = src/org-fmtlib-fmt
-	url = ../../fmtlib/fmt.git
+	url = https://github.com/fmtlib/fmt.git
 	shallow = true
 [submodule "src/org-libeigen-eigen"]
 	path = src/org-libeigen-eigen
 	url = https://gitlab.com/libeigen/eigen.git
-	shallow = true
-[submodule "src/yale-asyncvlsi-magic"]
-	path = src/yale-asyncvlsi-magic
-	url = ../../asyncvlsi/magic.git
-	shallow = true
-[submodule "src/yale-asyncvlsi-irsim"]
-	path = src/yale-asyncvlsi-irsim
-	url = ../../asyncvlsi/irsim.git
 	shallow = true
 [submodule "src/org-gnu-readline"]
 	path = src/org-gnu-readline
@@ -92,25 +76,25 @@
 #	url = https://git.tukaani.org/xz.git
 [submodule "src/org-pmodels-mpich"]
 	path = src/org-pmodels-mpich
-	url = ../../pmodels/mpich.git
+	url = https://github.com/pmodels/mpich.git
     shallow = true
 [submodule "src/lbl-xiaoyeli-superlu_dist"]
 	path = src/lbl-xiaoyeli-superlu_dist
-	url = ../../xiaoyeli/superlu_dist.git
+	url = https://github.com/xiaoyeli/superlu_dist.git
  	shallow = true
 [submodule "src/lbl-xiaoyeli-superlu"]
 	path = src/lbl-xiaoyeli-superlu
-	url = ../../xiaoyeli/superlu.git
+	url = https://github.com/xiaoyeli/superlu.git
  	shallow = true
 [submodule "src/umn-karypislab-parmetis"]
 	path = src/umn-karypislab-parmetis
-	url = ../../karypislab/parmetis.git
+	url = https://github.com/karypislab/parmetis.git
  	shallow = true
 [submodule "src/umn-karypislab-gklib"]
 	path = src/umn-karypislab-gklib
-	url = ../../KarypisLab/GKlib.git
+	url = https://github.com/KarypisLab/GKlib.git
  	shallow = true
 [submodule "src/umn-karypislab-metis"]
 	path = src/umn-karypislab-metis
-	url = ../../KarypisLab/METIS.git
+	url = https://github.com/KarypisLab/METIS.git
 	shallow = true

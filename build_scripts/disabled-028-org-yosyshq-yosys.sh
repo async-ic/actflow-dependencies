@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# DISABLED: unused, was src/org-yosyshq-yosys
+# https://github.com/yosyshq/yosys.git @ f109fa3d4c56fe33bc626c298e04d45ae510dd0e
 
 echo "####################"
 echo "# yosys"
