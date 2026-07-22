@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,10 +25,11 @@ fi
 cd $EDA_SRC/org-fmtlib-fmt/build
 cmake \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
+-D CMAKE_BUILD_TYPE=Release \
 -D CMAKE_POSITION_INDEPENDENT_CODE=TRUE \
 -D BUILD_SHARED_LIBS=TRUE \
--D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
--D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
+-D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+-D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
  .. || exit 1
 sed -i 's/\/lib64/\/lib/g' cmake_install.cmake
 make -j || exit 1

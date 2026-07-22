@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,9 +29,9 @@ cd $EDA_SRC/sandia-trilinos-trilinos/build
 
 cmake \
 -G "Unix Makefiles" \
--D CMAKE_CXX_FLAGS="-O2 -fPIC" \
--D CMAKE_C_FLAGS="-O2 -fPIC" \
--D CMAKE_Fortran_FLAGS="-O2 -fPIC" \
+-D CMAKE_CXX_FLAGS="-O3 -fPIC ${CXXFLAGS}" \
+-D CMAKE_C_FLAGS="-O3 -fPIC ${CFLAGS}" \
+-D CMAKE_Fortran_FLAGS="-O3 -fPIC ${FFLAGS}" \
 -D CMAKE_MAKE_PROGRAM="make" \
 -D Trilinos_ENABLE_NOX=ON \
 -D NOX_ENABLE_LOCA=ON \
@@ -44,7 +45,7 @@ cmake \
 -D Trilinos_ENABLE_AztecOO=ON \
 -D Trilinos_ENABLE_Belos=ON \
 -D Trilinos_ENABLE_Teuchos=ON \
--D Trilinos_ENABLE_COMPLEX_DOUBLE=ON \
+-D Trilinos_ENABLE_COMPLEX=ON \
 -D Trilinos_ENABLE_Amesos=ON \
 -D Amesos_ENABLE_KLU=ON \
 -D Trilinos_ENABLE_Amesos2=ON \
@@ -56,7 +57,7 @@ cmake \
 -D Trilinos_ENABLE_Zoltan=ON \
 -D Trilinos_ENABLE_OpenMP=ON \
 -D Trilinos_ENABLE_ShyLU=ON \
--D Trilinos_ENABLE_MLK=ON \
+-D Trilinos_ENABLE_MueLu=ON \
 -D Trilinos_ENABLE_ROL=ON \
 -D Trilinos_ENABLE_ShyLU_DDCore=ON \
 -D Trilinos_ENABLE_ShyLU_Node=ON \
@@ -70,8 +71,8 @@ cmake \
 -D TPL_ENABLE_BLAS=ON \
 -D TPL_ENABLE_LAPACK=ON \
 -D TPL_ENABLE_MPI=ON \
--D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
--D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
+-D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+-D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +23,7 @@ cp COPYRIGHT $ACT_HOME/license/LICENSE_org-debian-fftw
 cat COPYING >> $ACT_HOME/license/LICENSE_org-debian-fftw
 #./bootstrap.sh 
 ./configure --prefix=$ACT_HOME \
- CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib -fPIC" \
+ CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib -fPIC ${CFLAGS}" \
  CPPFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib -fPIC" \
  LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib"  || exit 1
 make -j  || exit 1

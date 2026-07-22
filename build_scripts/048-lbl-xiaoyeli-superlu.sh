@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,42 +26,20 @@ if [ ! -d build ]; then
 fi
 cp License.txt $ACT_HOME/license/LICENSE_lbl-xiaoyeli-superlu
 
-cd $EDA_SRC/lbl-xiaoyeli-superlu_dist
-if [ ! -d build ]; then
-	mkdir build
-fi
-# license
-
-cp License.txt >> $ACT_HOME/license/LICENSE_lbl-xiaoyeli-superlu_dist
 cd $EDA_SRC/lbl-xiaoyeli-superlu/build
 
 cmake \
--D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
--D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
+-D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+-D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
 -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
 -D CMAKE_BUILD_TYPE=Release \
--D TPL_BLAS_LIBRARIES=
--D TPL_ENABLE_INTERNAL_BLASLIB=OFF
--D TPL_ENABLE_LAPACKLIB=ON
+-D TPL_BLAS_LIBRARIES= \
+-D TPL_ENABLE_INTERNAL_BLASLIB=OFF \
+-D TPL_ENABLE_LAPACKLIB=ON \
 $EDA_SRC/lbl-xiaoyeli-superlu || exit 1
-
-make -j || exit 1
-make install || exit 1
-
-cd $EDA_SRC/lbl-xiaoyeli-superlu_dist/build
-
-cmake \
--D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
--D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' \
--D CMAKE_INSTALL_PREFIX=$ACT_HOME \
--D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
--D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
--D CMAKE_POSITION_INDEPENDENT_CODE=ON \
--D CMAKE_BUILD_TYPE=Release \
-$EDA_SRC/lbl-xiaoyeli-superlu_dist  || exit 1
 
 make -j || exit 1
 make install || exit 1

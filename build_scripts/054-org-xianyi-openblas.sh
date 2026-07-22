@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +40,17 @@ cp LICENSE $ACT_HOME/license/LICENSE_org-xianyi-openblas
 #sed -i 's/\/lib64/\/lib/g' cmake_install.cmake
 #make -j || exit 1
 #make install  || exit 1
-make -j NUM_THREADS=64 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+# force TARGET: OpenBLAS's cpuid auto-detection misidentifies CPUs under some hypervisors/containers
+case "$ARCH_LEVEL" in
+	x86-64-v4) OPENBLAS_TARGET=SKYLAKEX ;;
+	x86-64-v3) OPENBLAS_TARGET=HASWELL ;;
+	x86-64-v2) OPENBLAS_TARGET=NEHALEM ;;
+	armv9-a)   OPENBLAS_TARGET=ARMV9SME ;;
+	armv8-a)   OPENBLAS_TARGET=ARMV8 ;;
+	*) OPENBLAS_TARGET= ;;
+esac
+
+make -j TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=64 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
 make PREFIX=$ACT_HOME install  || exit 1
 cd $ACT_HOME/lib/
 ln -s libopenblas.so libblas.so

@@ -8,7 +8,8 @@ for source in $(pwd)/src/*; do
     if [ -d $source ]; then
         cd $source
         git reset --hard
-        git clean -d --force
+        # -x: also remove gitignored build artifacts, stale ones break toolchain switches
+        git clean -d --force -x
     fi
 done
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #
-# Copyright 2022 Ole Richter - University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,8 +36,10 @@ sed -i 's/ver=1.15/ver=1.13/' autogen.sh
     --enable-fortran=all \
     --enable-cxx \
     --enable-threads=runtime \
-    FFLAGS=-fallow-argument-mismatch \
-    FCFLAGS=-fallow-argument-mismatch || exit 1
+    CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" \
+    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" \
+    FFLAGS="-fallow-argument-mismatch ${FFLAGS}" \
+    FCFLAGS="-fallow-argument-mismatch ${FCFLAGS}" || exit 1
 make -j2 || exit 1
 make install || exit 1
 
