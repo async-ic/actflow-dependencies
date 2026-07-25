@@ -17,5 +17,6 @@ yum-config-manager --enable rhel-server-rhscl-7-rpms
 yum-config-manager --disable centos-sclo-sclo
 
 echo "repo setup"
-echo "yum install -y devtoolset-11 m4 autoconf automake bison flex libtool python3 csh patch texinfo gettext-devel po4a | cat" | bash
+# gmp/mpfr/mpc/zlib devel: needed to configure/build the gcc bootstrap in 007-org-gnu-gcc.sh
+echo "yum install -y devtoolset-11 m4 autoconf automake bison flex libtool python3 csh patch texinfo gettext-devel po4a gmp-devel mpfr-devel libmpc-devel zlib-devel chrpath | cat" | bash
 echo "install done"
