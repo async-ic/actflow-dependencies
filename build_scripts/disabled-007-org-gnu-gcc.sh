@@ -35,7 +35,7 @@ echo "#### build libgfortran: libbacktrace ####"
 echo
 
 cd $EDA_SRC/org-gnu-gcc/libbacktrace
-./configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+./configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make || exit 1
 make install || exit 1
 
@@ -48,7 +48,7 @@ if [ ! -d build ]; then
 	mkdir build
 fi
 cd $EDA_SRC/org-gnu-gcc/libquadmath/build
-../configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+../configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 sed -i 's/\/..\/lib64//' Makefile
 make  || exit 1
 make install || exit 1
@@ -58,7 +58,7 @@ echo "#### build gcc libgfortran ####"
 echo
 
 cd $EDA_SRC/org-gnu-gcc/libgfortran
-./configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+./configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 sed -i 's/\/..\/lib64//' Makefile
 make  || exit 1
 make install || exit 1
@@ -71,6 +71,6 @@ if [ ! -d build ]; then
 	mkdir build
 fi
 cd $EDA_SRC/org-gnu-gcc/libgomp/build
-../configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+../configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make  || exit 1
 make install || exit 1

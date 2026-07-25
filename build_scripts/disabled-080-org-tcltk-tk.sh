@@ -32,6 +32,6 @@ fi
 cd $EDA_SRC/org-tcltk-tk
 cp license.terms $ACT_HOME/license/LICENSE_org-tcltk-tk
 cd unix
-./configure --prefix=$ACT_HOME --with-tcl=$EDA_SRC/org-tcltk-tcl/unix CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib"  || exit 1
+./configure --prefix=$ACT_HOME --with-tcl=$EDA_SRC/org-tcltk-tcl/unix CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib"  || exit 1
 make -j || exit 1
 make install || exit 1

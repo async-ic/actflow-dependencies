@@ -37,7 +37,7 @@ sed -i 's/ver=1.15/ver=1.13/' autogen.sh
     --enable-cxx \
     --enable-threads=runtime \
     CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" \
-    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" \
+    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" \
     FFLAGS="-fallow-argument-mismatch ${FFLAGS}" \
     FCFLAGS="-fallow-argument-mismatch ${FCFLAGS}" || exit 1
 make -j2 || exit 1

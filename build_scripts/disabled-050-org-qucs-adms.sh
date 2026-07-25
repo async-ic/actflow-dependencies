@@ -9,6 +9,6 @@
 #./configure --prefix=$ACT_HOME \
 #   LIBS="-L$ACT_HOME/lib ${LIBS}" \
 #   CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" \
-#   LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" 
+#   LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" 
 #make -j 
 #make install 

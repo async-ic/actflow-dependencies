@@ -29,7 +29,7 @@ cd $EDA_SRC/yale-asyncvlsi-irsim
 # license
 cp COPYRIGHT $ACT_HOME/license/LICENSE_yale-asyncvlsi-irsim
 
-./configure --prefix=$ACT_HOME CFLAGS="-g -I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+./configure --prefix=$ACT_HOME CFLAGS="-g -I${ACT_HOME}/include -L${ACT_HOME}/lib" LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib" || exit 1
 make || exit 1
 make install || exit 1
 

@@ -18,7 +18,7 @@ echo "#############################"
 echo "# libedit"
 cd "$EDA_SRC/org-debian-libedit"
 autoreconf --force --include=$ACT_HOME/include
-./configure --prefix $ACT_HOME LIBS="-L$ACT_HOME/lib ${LIBS}" CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib"  || exit 1
+./configure --prefix $ACT_HOME LIBS="-L$ACT_HOME/lib ${LIBS}" CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib"  || exit 1
 make -j || exit 1
 make install || exit 1
 cp COPYING $ACT_HOME/license/LICENSE_libedit.txt

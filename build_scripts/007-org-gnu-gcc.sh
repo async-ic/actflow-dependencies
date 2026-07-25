@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2026 Ole Richter - Technical University of Denmark, University of Groningen
+# Copyright 2026 Ole Richter - Technical University of Denmark
 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

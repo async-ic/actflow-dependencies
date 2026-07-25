@@ -25,7 +25,7 @@ esac
 cd $EDA_SRC/$LIBFFI_SRC
 cp LICENSE $ACT_HOME/license/LICENSE_org-libffi-libffi
 ./autogen.sh || exit 1
-./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 sed -i 's/\/..\/lib64//' Makefile
 cd x86*
 sed -i 's/\/..\/lib64//' Makefile

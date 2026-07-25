@@ -27,7 +27,7 @@ echo "PREFIX := $ACT_HOME" >> Makefile.conf
 echo "LDLIBS += -lncurses" >> Makefile.conf
 echo "ABCEXTERNAL := abc" >> Makefile.conf
 echo "CXXFLAGS += -I${ACT_HOME}/include -L${ACT_HOME}/lib" >> Makefile.conf
-echo "LDFLAGS += -L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" >> Makefile.conf
+echo "LDFLAGS += -L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib" >> Makefile.conf
 make -j2  || exit 1
 make install || exit 1
 cp COPYING $ACT_HOME/license/LICENSE_org-yosyshq-yosys

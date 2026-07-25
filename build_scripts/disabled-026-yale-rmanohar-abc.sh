@@ -26,7 +26,7 @@ mv $EDA_SRC/yale-rmanohar-abc/Makefile $EDA_SRC/yale-rmanohar-abc/Makefile.origi
 
 echo "LIBS += -lncurses" > $EDA_SRC/yale-rmanohar-abc/Makefile
 echo "CFLAGS += -I${ACT_HOME}/include -L${ACT_HOME}/lib" >> $EDA_SRC/yale-rmanohar-abc/Makefile
-echo "LDFLAGS += -L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" >> $EDA_SRC/yale-rmanohar-abc/Makefile
+echo "LDFLAGS += -L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib" >> $EDA_SRC/yale-rmanohar-abc/Makefile
 cat $EDA_SRC/yale-rmanohar-abc/Makefile.original >> $EDA_SRC/yale-rmanohar-abc/Makefile
 make ABC_USE_LIBSTDCXX=1 -j || exit 1
 # so build broken but probably not used

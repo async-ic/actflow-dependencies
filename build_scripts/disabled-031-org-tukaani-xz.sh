@@ -29,6 +29,6 @@ cat COPYING.LGPLv2.1 >> $ACT_HOME/license/LICENSE_org-tukaani-xz
     --disable-scripts \
     --disable-doc \
     CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" \
-    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make -j || exit 1
 make install || exit 1

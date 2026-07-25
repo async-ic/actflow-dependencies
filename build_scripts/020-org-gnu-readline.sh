@@ -18,6 +18,6 @@ echo "#############################"
 echo "# libreadline"
 cd $EDA_SRC/org-gnu-readline
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-readline
-./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib,-rpath=$ACT_HOME/lib" || exit 1
+./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make -j || exit 1
 make install || exit 1
