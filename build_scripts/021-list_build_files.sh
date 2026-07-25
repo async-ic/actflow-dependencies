@@ -14,19 +14,13 @@
 # limitations under the License.
 #
 
-if [ x$ACT_HOME = x ]
-then
-	echo "Please set the environment variable ACT_HOME to the install directory"
-        exit 1
-fi
+# snapshot of $ACT_HOME before tcl: everything installed so far (cmake, gcc,
+# ncurses, zlib, libedit, readline) is build-only, so this records all files
+# except shared objects (*.so, *.so.*) and license files.
 
-echo 
-echo "#### package the ACT_HOME install ####"
-echo
-if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
+echo "#############################"
+echo "# list build-only files ($ACT_HOME so far, except *.so and license)"
 
-# move to the folder above act_home so the pathes inside the tar are nice
-WORK_DIR=$(pwd)
-mv actflow_dependency_build_* $ACT_HOME/
-cd $ACT_HOME/..
-tar -I 'gzip -9' -cf $WORK_DIR/actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz $(realpath --relative-to ./ $ACT_HOME)
+cd $ACT_HOME
+find . -type f ! -name "*.so" ! -name "*.so.*" ! -path "./license/*" ! -name "LICENSE.txt" \
+	| sed 's|^\./||' | sort > build_only_files.list
