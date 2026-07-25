@@ -17,8 +17,13 @@
 echo "#############################"
 echo "# libedit"
 cd "$EDA_SRC/org-debian-libedit"
-autoreconf --force --include=$ACT_HOME/include
-./configure --prefix $ACT_HOME LIBS="-L$ACT_HOME/lib ${LIBS}" CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib"  || exit 1
+# use the shipped configure, not autoreconf: configure.ac needs AC_CHECK_INCLUDES_DEFAULT
+# (autoconf 2.70+), the host has 2.69, so regenerating produces a broken configure.
+# git checkout drops mtimes, so make would try to re-run the (absent) automake-1.18 to
+# refresh Makefile.in; touch the generated files newer than their sources so they look current.
+find . \( -name "*.in" -o -name configure -o -name aclocal.m4 \) -exec touch {} +
+# --disable-examples: not shipped, saves build time/space (the library itself is unaffected)
+./configure --prefix $ACT_HOME --disable-examples LIBS="-L$ACT_HOME/lib ${LIBS}" CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib"  || exit 1
 make -j || exit 1
 make install || exit 1
 cp COPYING $ACT_HOME/license/LICENSE_libedit.txt

@@ -17,7 +17,11 @@
 echo "#############################"
 echo "# ncurses"
 cd $EDA_SRC/org-debian-ncurses
+# --disable-widec: ncurses 6.6 defaults to ABI 6, which enables widec and names the
+# libs libncursesw/libtinfow; classic consumers (libedit, readline) look for -lncurses/
+# -ltinfo and fail. non-wide restores those names (the pre-6.6 ABI-5 default behaviour).
 ./configure \
+  --disable-widec \
   --with-cxx-binding \
   --with-cxx-shared \
   --with-xterm-kbs=del \
