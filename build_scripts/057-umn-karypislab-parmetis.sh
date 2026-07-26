@@ -22,7 +22,7 @@ cd $EDA_SRC/umn-karypislab-gklib
 if [ ! -d build ]; then
 	mkdir build
 fi
-cp LICENSE $ACT_HOME/license/LICENSE_umn-karypislab-gklib
+cp LICENSE.txt $ACT_HOME/license/LICENSE_umn-karypislab-gklib
 
 cd $EDA_SRC/umn-karypislab-gklib/build
 
@@ -30,6 +30,7 @@ cmake \
 -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
 -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
+-D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
 -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
@@ -52,7 +53,7 @@ fi
 cp LICENSE $ACT_HOME/license/LICENSE_umn-karypislab-metis
 
 BUILDDIR=$EDA_SRC/umn-karypislab-metis/build \
-make config i64=set r64=set CONFIG_FLAGS="-D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' -D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' -D CMAKE_INSTALL_PREFIX=$ACT_HOME -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib -D CMAKE_INCLUDE_PATH=$ACT_HOME/include -D CMAKE_POSITION_INDEPENDENT_CODE=ON -D CMAKE_BUILD_TYPE=Release -D OPENMP=set "\
+make config i64=set r64=set CONFIG_FLAGS="-D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' -D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' -D CMAKE_INSTALL_PREFIX=$ACT_HOME -D CMAKE_INSTALL_LIBDIR=lib -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib -D CMAKE_INCLUDE_PATH=$ACT_HOME/include -D CMAKE_POSITION_INDEPENDENT_CODE=ON -D CMAKE_BUILD_TYPE=Release -D OPENMP=set "\
  || exit 1
 cd $EDA_SRC/umn-karypislab-metis/build
 make -j || exit 1
@@ -70,6 +71,8 @@ cp LICENSE $ACT_HOME/license/LICENSE_umn-karypislab-parmetis
 
 cd $EDA_SRC/umn-karypislab-parmetis/build
 
+# -Wno-error=incompatible-pointer-types: 64-bit idx_t* passed to the MPI-4 large-count
+# MPI_*_c collectives (they take MPI_Count*), bit-identical on LP64 but gcc 16 errors.
 cmake \
 -D CMAKE_C_COMPILER=mpicc \
 -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
@@ -80,7 +83,7 @@ cmake \
 -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
 -D CMAKE_BUILD_TYPE=Release \
 -D OPENMP=set \
--D CMAKE_C_FLAGS="-D_POSIX_C_SOURCE=199309L ${CFLAGS}" \
+-D CMAKE_C_FLAGS="-D_POSIX_C_SOURCE=199309L -Wno-error=incompatible-pointer-types ${CFLAGS}" \
 $EDA_SRC/umn-karypislab-parmetis || exit 1
 
 make -j || exit 1
