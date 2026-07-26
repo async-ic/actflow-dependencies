@@ -66,31 +66,33 @@ build:x86-64-v2:
       - actflow_dependencies_package_*.tar.gz
     expire_in: 1 week
 
-build:x86-64-v3:
-  <<: *build_alma9
-  stage: build
-  needs: ["prepare:sources"]
-  allow_failure: true
-  variables:
-    ARCH_LEVEL: x86-64-v3
-    GIT_STRATEGY: none
-  artifacts:
-    paths:
-      - actflow_dependencies_package_*.tar.gz
-    expire_in: 1 week
-
-build:x86-64-v4:
-  <<: *build_alma9
-  stage: build
-  needs: ["prepare:sources"]
-  allow_failure: true
-  variables:
-    ARCH_LEVEL: x86-64-v4
-    GIT_STRATEGY: none
-  artifacts:
-    paths:
-      - actflow_dependencies_package_*.tar.gz
-    expire_in: 1 week
+# x86-64-v3 / v4 disabled: no v3/v4 CI runners available yet. re-enable these
+# build+test jobs and the release needs/upload/assets-link below once runners exist.
+#build:x86-64-v3:
+#  <<: *build_alma9
+#  stage: build
+#  needs: ["prepare:sources"]
+#  allow_failure: true
+#  variables:
+#    ARCH_LEVEL: x86-64-v3
+#    GIT_STRATEGY: none
+#  artifacts:
+#    paths:
+#      - actflow_dependencies_package_*.tar.gz
+#    expire_in: 1 week
+#
+#build:x86-64-v4:
+#  <<: *build_alma9
+#  stage: build
+#  needs: ["prepare:sources"]
+#  allow_failure: true
+#  variables:
+#    ARCH_LEVEL: x86-64-v4
+#    GIT_STRATEGY: none
+#  artifacts:
+#    paths:
+#      - actflow_dependencies_package_*.tar.gz
+#    expire_in: 1 week
 
 # distro portability matrix: each packaged variant tested against target OSes
 .test_script: &test_script
@@ -128,55 +130,55 @@ test:x86-64-v2:
           - fedora:20               # kernel 3.11
   image: $DISTRO_IMAGE
 
-test:x86-64-v3:
-  <<: *test_script
-  stage: test
-  needs: ["prepare:sources", "build:x86-64-v3"]
-  rules:
-    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
-      allow_failure: true
-    - when: on_success
-  variables:
-    ARCH_LEVEL: x86-64-v3
-  parallel:
-    matrix:
-      - DISTRO_IMAGE:
-          - almalinux:9           # kernel 5.14
-          - almalinux:10          # kernel 6.12
-          - debian:stable          # trixie, kernel 6.12
-          - debian:oldstable       # bookworm, kernel 6.1
-          - ubuntu:22.04           # kernel 5.15
-          - ubuntu:24.04           # kernel 6.8
-          - ubuntu:26.04           # kernel 6.14
-          - opensuse/leap:15       # 15.6, kernel 6.4
-          - archlinux/archlinux:latest # rolling
-          - fedora:latest          # rolling
-  image: $DISTRO_IMAGE
-
-test:x86-64-v4:
-  <<: *test_script
-  stage: test
-  needs: ["prepare:sources", "build:x86-64-v4"]
-  rules:
-    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
-      allow_failure: true
-    - when: on_success
-  variables:
-    ARCH_LEVEL: x86-64-v4
-  parallel:
-    matrix:
-      - DISTRO_IMAGE:
-          - almalinux:9           # kernel 5.14
-          - almalinux:10          # kernel 6.12
-          - debian:stable          # trixie, kernel 6.12
-          - debian:oldstable       # bookworm, kernel 6.1
-          - ubuntu:22.04           # kernel 5.15
-          - ubuntu:24.04           # kernel 6.8
-          - ubuntu:26.04           # kernel 6.14
-          - opensuse/leap:15       # 15.6, kernel 6.4
-          - archlinux/archlinux:latest # rolling
-          - fedora:latest          # rolling
-  image: $DISTRO_IMAGE
+#test:x86-64-v3:
+#  <<: *test_script
+#  stage: test
+#  needs: ["prepare:sources", "build:x86-64-v3"]
+#  rules:
+#    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+#      allow_failure: true
+#    - when: on_success
+#  variables:
+#    ARCH_LEVEL: x86-64-v3
+#  parallel:
+#    matrix:
+#      - DISTRO_IMAGE:
+#          - almalinux:9           # kernel 5.14
+#          - almalinux:10          # kernel 6.12
+#          - debian:stable          # trixie, kernel 6.12
+#          - debian:oldstable       # bookworm, kernel 6.1
+#          - ubuntu:22.04           # kernel 5.15
+#          - ubuntu:24.04           # kernel 6.8
+#          - ubuntu:26.04           # kernel 6.14
+#          - opensuse/leap:15       # 15.6, kernel 6.4
+#          - archlinux/archlinux:latest # rolling
+#          - fedora:latest          # rolling
+#  image: $DISTRO_IMAGE
+#
+#test:x86-64-v4:
+#  <<: *test_script
+#  stage: test
+#  needs: ["prepare:sources", "build:x86-64-v4"]
+#  rules:
+#    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+#      allow_failure: true
+#    - when: on_success
+#  variables:
+#    ARCH_LEVEL: x86-64-v4
+#  parallel:
+#    matrix:
+#      - DISTRO_IMAGE:
+#          - almalinux:9           # kernel 5.14
+#          - almalinux:10          # kernel 6.12
+#          - debian:stable          # trixie, kernel 6.12
+#          - debian:oldstable       # bookworm, kernel 6.1
+#          - ubuntu:22.04           # kernel 5.15
+#          - ubuntu:24.04           # kernel 6.8
+#          - ubuntu:26.04           # kernel 6.14
+#          - opensuse/leap:15       # 15.6, kernel 6.4
+#          - archlinux/archlinux:latest # rolling
+#          - fedora:latest          # rolling
+#  image: $DISTRO_IMAGE
 
 # uses script: not the declarative release: keyword - that only does $VAR substitution, can't run head/rename commands below
 release:
@@ -187,11 +189,11 @@ release:
   needs:
     - prepare:sources
     - build:x86-64-v2
-    - build:x86-64-v3
-    - build:x86-64-v4
+#    - build:x86-64-v3
+#    - build:x86-64-v4
     - test:x86-64-v2
-    - test:x86-64-v3
-    - test:x86-64-v4
+#    - test:x86-64-v3
+#    - test:x86-64-v4
   script:
     - |
       PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${CI_COMMIT_SHORT_SHA}"
@@ -204,8 +206,8 @@ release:
       }
       upload "actflow_dependencies_sources_*.tar.gz" "actflow_dependencies_sources.tar.gz"
       upload "actflow_dependencies_package_x86-64-v2_*.tar.gz" "actflow_dependencies_package_x86-64-v2.tar.gz"
-      upload "actflow_dependencies_package_x86-64-v3_*.tar.gz" "actflow_dependencies_package_x86-64-v3.tar.gz"
-      upload "actflow_dependencies_package_x86-64-v4_*.tar.gz" "actflow_dependencies_package_x86-64-v4.tar.gz"
+      # upload "actflow_dependencies_package_x86-64-v3_*.tar.gz" "actflow_dependencies_package_x86-64-v3.tar.gz"
+      # upload "actflow_dependencies_package_x86-64-v4_*.tar.gz" "actflow_dependencies_package_x86-64-v4.tar.gz"
 
       RELEASE_TAG="$(head -n 1 packaging/release_tag.md)"
       RELEASE_TITLE="$(head -n 1 packaging/release_titel.md)"
@@ -216,6 +218,6 @@ release:
         --name "${RELEASE_TITLE}" \
         --description "${RELEASE_DESCRIPTION}" \
         --assets-link "{\"name\":\"actflow_dependencies_sources.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_sources.tar.gz\"}" \
-        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}" \
-        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
-        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
+        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}"
+        # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
+        # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
