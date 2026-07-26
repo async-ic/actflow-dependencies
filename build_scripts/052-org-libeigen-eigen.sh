@@ -26,6 +26,7 @@ fi
 cd $EDA_SRC/org-libeigen-eigen/build
 cmake \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
+-D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
 -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \

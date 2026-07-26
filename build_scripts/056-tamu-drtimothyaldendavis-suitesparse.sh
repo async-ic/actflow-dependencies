@@ -23,6 +23,7 @@ cp LICENSE.txt $ACT_HOME/license/LICENSE_tamu-drtimothyaldendavis-suitesparse
 cmake \
  -D SuiteSparsePath=$EDA_SRC/tamu-drtimothyaldendavis-suitesparse \
  -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
+-D CMAKE_INSTALL_LIBDIR=lib \
  -D CMAKE_BUILD_TYPE=Release \
  -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
  -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
