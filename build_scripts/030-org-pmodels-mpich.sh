@@ -25,9 +25,9 @@ echo
 cd $EDA_SRC/org-pmodels-mpich
 cp COPYRIGHT $ACT_HOME/license/LICENSE_org-pmodels-mpich
 
-# very bad hack => patching old version numbers:
+# accept host libtool 2.4.2 (mpich ships its own 2.4.4 files, not overwritten).
+# automake >=1.15 comes from 008.
 sed -i 's/ver=2.4.4/ver=2.4.2/' autogen.sh
-sed -i 's/ver=1.15/ver=1.13/' autogen.sh
 
 ./autogen.sh
 ./configure \
