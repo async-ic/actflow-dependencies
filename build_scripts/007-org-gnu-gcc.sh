@@ -73,6 +73,10 @@ BOOT_LDFLAGS="-Wl,-rpath=RPATH_PLACEHOLDER_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 make BOOT_LDFLAGS="$BOOT_LDFLAGS" -j$(nproc) || exit 1
 make BOOT_LDFLAGS="$BOOT_LDFLAGS" install-strip || exit 1
 
+# symlink cc->gcc: gcc ships no 'cc', else cmake probes the host cc (gcc 11) and
+# mixes toolchains -> LTO archive mismatch (metis <-> parmetis).
+ln -sf gcc $ACT_HOME/bin/cc
+
 rm -rf $BOOTSTRAP_ROOT
 
 # x86_64-linux hardcodes runtime libs into lib64/ regardless of --libdir (that
@@ -81,6 +85,9 @@ rm -rf $BOOTSTRAP_ROOT
 if [ -d $ACT_HOME/lib64 ]; then
 	mv $ACT_HOME/lib64/* $ACT_HOME/lib/
 	rmdir $ACT_HOME/lib64
+	# repoint moved .la files off the old lib64 path (else libtool links against
+	# libgfortran/libquadmath break).
+	sed -i 's|/lib/\.\./lib64|/lib|g' $ACT_HOME/lib/*.la
 fi
 
 # patch the real rpath over the placeholder on every ELF file that got one;
