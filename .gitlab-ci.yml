@@ -123,6 +123,8 @@ test:x86-64-v2:
       - DISTRO_IMAGE:
           - centos:7.2.1511        # kernel 3.10
           - rockylinux/rockylinux:8 # kernel 4.18
+          - almalinux:9           # kernel 5.14
+          - almalinux:10          # kernel 6.12
           - debian:oldoldstable     # bullseye, kernel 5.10
           - ubuntu:20.04            # kernel 5.4
           - ubuntu:18.04            # kernel 4.15
@@ -185,6 +187,7 @@ release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   rules:
+    - if: '$CI_COMMIT_TAG'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   needs:
     - prepare:sources
@@ -194,9 +197,19 @@ release:
     - test:x86-64-v2
 #    - test:x86-64-v3
 #    - test:x86-64-v4
+  before_script:
+    # jq + GNU date for the retention sweep (curl + release-cli ship in the image)
+    - apk add --no-cache jq coreutils >/dev/null 2>&1 || true
   script:
     - |
-      PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${CI_COMMIT_SHORT_SHA}"
+      # version = a git tag on this commit if any (published under the tag, kept
+      # forever), else YYYY-MM-DD_commithash, which the retention sweep below thins.
+      # also used as the release git tag.
+      RELEASE_VERSION="${CI_COMMIT_TAG:-}"
+      [ -n "$RELEASE_VERSION" ] || RELEASE_VERSION=$(curl -sf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits/${CI_COMMIT_SHA}/refs?type=tag" | jq -r '.[0].name // empty')
+      [ -n "$RELEASE_VERSION" ] || RELEASE_VERSION="$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA}"
+      PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${RELEASE_VERSION}"
       upload() {
         # $1 = local file (glob-matched, date/hash-suffixed), $2 = stable published name
         local_file=$(ls $1)
@@ -209,15 +222,17 @@ release:
       # upload "actflow_dependencies_package_x86-64-v3_*.tar.gz" "actflow_dependencies_package_x86-64-v3.tar.gz"
       # upload "actflow_dependencies_package_x86-64-v4_*.tar.gz" "actflow_dependencies_package_x86-64-v4.tar.gz"
 
-      RELEASE_TAG="$(head -n 1 packaging/release_tag.md)"
       RELEASE_TITLE="$(head -n 1 packaging/release_titel.md)"
       RELEASE_DESCRIPTION="$(head -n 1 packaging/release_description.md)"
 
       release-cli create \
-        --tag-name "${RELEASE_TAG}" \
+        --tag-name "${RELEASE_VERSION}" \
         --name "${RELEASE_TITLE}" \
         --description "${RELEASE_DESCRIPTION}" \
         --assets-link "{\"name\":\"actflow_dependencies_sources.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_sources.tar.gz\"}" \
         --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}"
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
+
+      # retention: keep 5 newest dated versions + one per 60 days, delete the rest
+      bash packaging/007-cleanup_old_packages.sh "${RELEASE_VERSION}" || true
