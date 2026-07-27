@@ -30,3 +30,4 @@ WORK_DIR=$(pwd)
 mv actflow_dependency_build_* $ACT_HOME/
 cd $ACT_HOME/..
 tar -I 'gzip -9' -cf $WORK_DIR/actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz $(realpath --relative-to ./ $ACT_HOME)
+ls -lh $WORK_DIR/actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz

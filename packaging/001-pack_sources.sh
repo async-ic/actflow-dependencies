@@ -28,4 +28,5 @@ touch "actflow_dependency_build_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local
 
 tar --exclude-vcs -I 'gzip -9' \
 -cf actflow_dependencies_sources_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz ./*
+ls -lh actflow_dependencies_sources_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz
 
