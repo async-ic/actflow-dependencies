@@ -14,13 +14,16 @@
 # limitations under the License.
 #
 
-# disabled support for lzma in boost iostreams
+# deps: trilinos submodule source | used by: 060-trilinos (gcc16 epetraext omp.h patch)
 
-echo "Applying mpich patch to xyce"
-if [ ! -f patched_dependencies_v1 ]
+# applies local source patches from extra/ needed to build the pinned submodule
+# versions with the gcc16 toolchain. the sentinel skips re-applying on resume.
+
+if [ ! -f patched_dependencies_v2 ]
 then
-   (cd src/sandia-xyce-xyce; 
-     patch -p0 < ../../extra/sandia-xyce-xyce-mpitest-bug967-mpich.patch;
-   )
-   touch patched_dependencies_v1
+   echo "Applying trilinos epetraext omp.h extern-C patch (gcc16)"
+   (cd src/sandia-trilinos-trilinos;
+     patch -p0 < ../../extra/sandia-trilinos-trilinos-epetraext-amd-omp-gcc16.patch;
+   ) || exit 1
+   touch patched_dependencies_v2
 fi

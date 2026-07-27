@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 030-mpich, 054-openblas, 052-eigen, 056-AMD, 002-patch | used by: 072-xyce
+
 echo 
 echo "#### trilinos ####"
 echo
@@ -27,14 +29,22 @@ cp LICENSE $ACT_HOME/license/LICENSE_sandia-trilinos-trilinos
 cat Copyright.txt >> $ACT_HOME/license/LICENSE_sandia-trilinos-trilinos
 cd $EDA_SRC/sandia-trilinos-trilinos/build
 
+# set the MPI wrappers explicitly (don't rely on PATH auto-detect); Trilinos builds
+# with them and exports no explicit MPI lib, so consumers (xyce 072) must match.
 cmake \
 -G "Unix Makefiles" \
+-D CMAKE_C_COMPILER=mpicc \
+-D CMAKE_CXX_COMPILER=mpicxx \
+-D CMAKE_Fortran_COMPILER=mpif90 \
 -D CMAKE_CXX_FLAGS="-O3 -fPIC ${CXXFLAGS}" \
 -D CMAKE_C_FLAGS="-O3 -fPIC ${CFLAGS}" \
 -D CMAKE_Fortran_FLAGS="-O3 -fPIC ${FFLAGS}" \
 -D CMAKE_MAKE_PROGRAM="make" \
 -D Trilinos_ENABLE_NOX=ON \
 -D NOX_ENABLE_LOCA=ON \
+-D Trilinos_ENABLE_DEPRECATED_PACKAGES=ON \
+-D Trilinos_ENABLE_Epetra=ON \
+-D Trilinos_ENABLE_Triutils=ON \
 -D Trilinos_ENABLE_EpetraExt=ON \
 -D EpetraExt_BUILD_BTF=ON \
 -D EpetraExt_BUILD_EXPERIMENTAL=ON \
@@ -62,8 +72,9 @@ cmake \
 -D Trilinos_ENABLE_ShyLU_DDCore=ON \
 -D Trilinos_ENABLE_ShyLU_Node=ON \
 -D Trilinos_ENABLE_ShyLU_NodeBasker=ON \
+-D Trilinos_ENABLE_ShyLU_NodeTacho=OFF \
 -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES=OFF \
--D CMAKE_CXX_STANDARD=17 \
+-D CMAKE_CXX_STANDARD=20 \
 -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
 -D TPL_ENABLE_AMD=ON \
 -D AMD_LIBRARY_DIRS=$ACT_HOME/lib \
@@ -74,6 +85,7 @@ cmake \
 -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
 -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
+-D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
 -D EIGEN3_ROOT=$ACT_HOME/include/eigen3 \

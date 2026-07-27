@@ -1,0 +1,17 @@
+gcc16 omp.h has C++ templates; EpetraExt wraps SuiteSparse's amd.h (which pulls
+omp.h via SuiteSparse_config.h) in extern "C" -> "template with C linkage".
+Pre-include omp.h at C++ linkage so its include guard neutralises the wrapped
+include inside the extern "C" block.
+
+--- packages/epetraext/src/transform/EpetraExt_AMD_CrsGraph.cpp
++++ packages/epetraext/src/transform/EpetraExt_AMD_CrsGraph.cpp
+@@ -51,6 +51,9 @@
+
+ #include <vector>
+
++#if defined(_OPENMP)
++#include <omp.h>
++#endif
+ extern "C" {
+ #include <amd.h>
+ }
