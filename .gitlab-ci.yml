@@ -69,13 +69,12 @@ prepare:sources:
 
 .build_centos7: &build_centos7
   image: centos:7.2.1511
-  before_script:
-    - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
-    - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
   script:
     - bash packaging/000-check_arch_level.sh
     - source packaging/centos7_ci_build_environment.sh
     - bash packaging/centos7_install_build_system.sh
+    - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
+    - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
     - source packaging/centos7_ci_build_environment.sh
     - bash packaging/003-build.sh
     - touch "actflow_dependency_build_$(cat actflow_dep.version)"
