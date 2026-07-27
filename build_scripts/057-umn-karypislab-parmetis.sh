@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: 005-cmake, 030-mpich (mpicc) | used by: 058-superlu_dist (TPL_PARMETIS); builds gklib+metis+parmetis
+# deps: 005-cmake, 030-mpich (mpicc) | used by: 060-trilinos (metis, ShyLU-Basker TPL); builds gklib+metis+parmetis (parmetis/gklib unused)
 
 echo 
 echo "#### GKlib ####"

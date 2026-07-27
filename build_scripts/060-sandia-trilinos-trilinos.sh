@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: 030-mpich, 054-openblas, 052-eigen, 056-AMD, 002-patch | used by: 072-xyce
+# deps: 030-mpich, 054-openblas, 052-eigen, 056-AMD, 057-metis, 002-patch | used by: 072-xyce
 
 echo 
 echo "#### trilinos ####"
@@ -55,7 +55,7 @@ cmake \
 -D Trilinos_ENABLE_AztecOO=ON \
 -D Trilinos_ENABLE_Belos=ON \
 -D Trilinos_ENABLE_Teuchos=ON \
--D Trilinos_ENABLE_COMPLEX=ON \
+-D Trilinos_ENABLE_COMPLEX_DOUBLE=ON \
 -D Trilinos_ENABLE_Amesos=ON \
 -D Amesos_ENABLE_KLU=ON \
 -D Trilinos_ENABLE_Amesos2=ON \
@@ -67,7 +67,7 @@ cmake \
 -D Trilinos_ENABLE_Zoltan=ON \
 -D Trilinos_ENABLE_OpenMP=ON \
 -D Trilinos_ENABLE_ShyLU=ON \
--D Trilinos_ENABLE_MueLu=ON \
+-D Trilinos_ENABLE_MueLu=OFF \
 -D Trilinos_ENABLE_ROL=ON \
 -D Trilinos_ENABLE_ShyLU_DDCore=ON \
 -D Trilinos_ENABLE_ShyLU_Node=ON \
@@ -79,6 +79,9 @@ cmake \
 -D TPL_ENABLE_AMD=ON \
 -D AMD_LIBRARY_DIRS=$ACT_HOME/lib \
 -D TPL_AMD_INCLUDE_DIRS=$ACT_HOME/include \
+-D TPL_ENABLE_METIS=ON \
+-D METIS_LIBRARY_DIRS=$ACT_HOME/lib \
+-D TPL_METIS_INCLUDE_DIRS=$ACT_HOME/include \
 -D TPL_ENABLE_BLAS=ON \
 -D TPL_ENABLE_LAPACK=ON \
 -D TPL_ENABLE_MPI=ON \

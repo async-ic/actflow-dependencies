@@ -23,15 +23,17 @@ Toolchain (to `$ACT_HOME/bin`, on PATH; 004/006/008 build-only):
 
 Libraries (built with gcc16):
 - 010 ncurses → 012, 020 · 010 zlib → 022-tcl, 042
-- 030 mpich → 042, 057, 058, 060, 072
+- 030 mpich → 042, 057, 060, 072
 - 050 fftw → 060, 072 · 052 eigen → 060 · 054 openblas → 060 (BLAS/LAPACK) · 056 AMD → 060
-- 057 parmetis → 058 · 060 trilinos → 072 · 072 xyce → actsim
-- runtime/downstream only: 012 libedit, 020 readline, 022 libffi/tcl, 042 boost,
-  044 numactl, 046 fmt, 048/058 superlu*
+- 057 metis → 060 (ShyLU-Basker)
+- 060 trilinos → 072 · 072 xyce → actsim
+- 044 numactl → actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
+- runtime/downstream only: 012 libedit, 020 readline, 022 libffi/tcl, 042 boost, 046 fmt
 
-Notes: 048 duplicates 058; superlu*/parmetis/boost/fmt/numactl are not used by
-Trilinos/Xyce in the current config. Trilinos exports no MPI lib, so 060/072 build
-with `mpicc/mpicxx/mpif90`.
+Notes: 048 superlu + 058 superlu_dist disabled (unused; Xyce comments them out). 057
+metis feeds trilinos ShyLU-Basker (TPL_ENABLE_METIS); its parmetis/gklib build but are
+unused. 060 matches Xyce's recommended config (MueLu off, COMPLEX_DOUBLE). boost/fmt
+are downstream-only. Trilinos exports no MPI lib, so 060/072 build with `mpicc/mpicxx/mpif90`.
 
 ## 2. yale-asyncvlsi-actflow (order from `./build`)
 

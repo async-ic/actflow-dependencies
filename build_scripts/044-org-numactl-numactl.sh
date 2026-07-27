@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: 007-gcc, 008-automake (autogen) | used by: runtime NUMA (HPC); no build-time consumer here
+# deps: 007-gcc, 008-automake (autogen) | used by: actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
 
 echo "#############################"
 echo "# numactl"
