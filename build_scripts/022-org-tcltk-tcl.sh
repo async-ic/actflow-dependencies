@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 010-zlib | used by: downstream magic/irsim (runtime)
+
 echo "#############################"
 echo "# tcl"
 cd $EDA_SRC/org-tcltk-tcl

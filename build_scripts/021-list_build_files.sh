@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+# deps: all installs so far (cmake,gcc,ncurses,zlib,libedit,readline,flex,bison,automake) | used by: 070 (appends), packaging runtime-trim
+
 # snapshot of $ACT_HOME before tcl: everything installed so far (cmake, gcc,
 # ncurses, zlib, libedit, readline) is build-only, so this records all files
 # except shared objects (*.so, *.so.*) and license files.

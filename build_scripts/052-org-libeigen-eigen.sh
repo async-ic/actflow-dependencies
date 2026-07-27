@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 005-cmake, 050-fftw | used by: 060-trilinos (EIGEN3_ROOT)
+
 echo "#############################"
 echo "# eigen"
 

@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 030-mpich (mpi), 010-zlib (iostreams) | used by: downstream actsim; optional trilinos/xyce TPL
+
 echo 
 echo "#### Boost ####"
 echo

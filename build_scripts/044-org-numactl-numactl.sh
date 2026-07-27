@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc, 008-automake (autogen) | used by: runtime NUMA (HPC); no build-time consumer here
+
 echo "#############################"
 echo "# numactl"
 cd $EDA_SRC/org-numactl-numactl

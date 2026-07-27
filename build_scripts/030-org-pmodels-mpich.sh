@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc (fortran), 008-automake (autogen) | used by: 042-boost, 057-parmetis, 058-superlu_dist, 060-trilinos, 072-xyce
+
 # => boost
 # => trilinos (xyce => actsim)
 # => galois (backend tools)

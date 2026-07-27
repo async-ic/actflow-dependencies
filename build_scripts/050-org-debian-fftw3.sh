@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc | used by: 072-xyce (FFT), 060-trilinos
+
 echo "#############################"
 echo "# fftw"
 

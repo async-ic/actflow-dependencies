@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# deps: 005-cmake, external LAPACK | used by: n/a in current config (superlu also built by 058; trilinos SuperLU TPL not enabled) - see NOTE
 # 
 
 

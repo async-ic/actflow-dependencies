@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc, 008-automake (autogen) | used by: downstream (FFI, runtime)
+
 echo "#############################"
 echo "# libffi"
 cd $EDA_SRC/org-libffi-libffi

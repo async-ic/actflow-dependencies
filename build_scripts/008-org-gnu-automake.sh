@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc; host autoconf | used by: autogen/autoreconf deps 022-libffi, 030-mpich, 044-numactl
+
 # builds automake 1.17 into $ACT_HOME (first on PATH) for deps needing a newer
 # automake than the host 1.13 - mpich v5.0.1 autogen leaves PAC_SUBCFG macros
 # unexpanded under 1.13. bootstrap generates the missing configure. build-only,

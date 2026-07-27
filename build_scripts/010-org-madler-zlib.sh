@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc | used by: 022-tcl, 042-boost (iostreams); downstream
+
 echo "#############################"
 echo "# zlib"
 cd $EDA_SRC/org-madler-zlib

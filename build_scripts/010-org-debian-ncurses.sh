@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc | used by: 012-libedit, 020-readline
+
 echo "#############################"
 echo "# ncurses"
 cd $EDA_SRC/org-debian-ncurses

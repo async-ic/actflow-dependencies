@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 010-ncurses | used by: downstream ACT interactive tools (runtime)
+
 echo "#############################"
 echo "# libedit"
 cd "$EDA_SRC/org-debian-libedit"

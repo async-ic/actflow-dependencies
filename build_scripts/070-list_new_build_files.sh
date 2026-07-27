@@ -13,6 +13,8 @@
 # limitations under the License.
 #
 
+# deps: all installs since 021 | used by: packaging runtime-trim (with 021)
+
 # snapshot of $ACT_HOME before xyce: adds files installed since
 # 021-list_build_files.sh, except shared objects (*.so, *.so.*), binaries
 # (bin/, e.g. tclsh, mpirun - may be needed at runtime by now), license files

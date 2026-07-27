@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 007-gcc | used by: 060-trilinos (BLAS/LAPACK); provides libblas/liblapack symlinks
+
 echo "#############################"
 echo "# BLAS"
 

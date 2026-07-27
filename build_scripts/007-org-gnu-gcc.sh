@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: host gcc/devtoolset | used by: every package built after (008+) compiles with this gcc16
+
 # builds a fully self-hosted gcc 16 (c,c++,fortran) into $ACT_HOME. $ACT_HOME/bin
 # is first on PATH, so every later build_scripts/*.sh compiles with gcc 16 instead
 # of the host/devtoolset compiler; the shipped package carries a complete, matching

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# deps: 057-parmetis, 030-mpich, 054-openblas | used by: trilinos SuperLUDist TPL (NOT enabled in current 060) / downstream
 # 
 
 

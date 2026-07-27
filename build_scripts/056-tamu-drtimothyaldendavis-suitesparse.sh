@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 005-cmake; builds only AMD (xyce cmake/trilinos/AMD) | used by: 060-trilinos (TPL_ENABLE_AMD)
+
 echo "#############################"
 echo "# suitesparse"
 cd $EDA_SRC/tamu-drtimothyaldendavis-suitesparse

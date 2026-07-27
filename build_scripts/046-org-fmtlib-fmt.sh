@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 005-cmake | used by: downstream ACT tools (runtime); not a trilinos/xyce TPL here
+
 echo "#############################"
 echo "# fmt"
 cd $EDA_SRC/org-fmtlib-fmt
