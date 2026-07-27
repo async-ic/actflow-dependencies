@@ -26,6 +26,6 @@ if [ -d "../packaging" ]; then echo "please exec from repository root (one folde
 # save the version number for reference
 touch "actflow_dependency_build_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
 
-tar --exclude-vcs -I 'gzip -9'\
+tar --exclude-vcs -I 'gzip -9' \
 -cf actflow_dependencies_sources_$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}.tar.gz ./*
 
