@@ -2,9 +2,9 @@
 	path = src/org-kitware-cmake
 	url = https://github.com/Kitware/CMake.git
 	shallow = true
-[submodule "src/org-xianyi-openblas"]
-	path = src/org-xianyi-openblas
-	url = https://github.com/xianyi/OpenBLAS.git
+[submodule "src/cas-openmathlib-openblas"]
+	path = src/cas-openmathlib-openblas
+	url = https://github.com/OpenMathLib/OpenBLAS.git
 	shallow = true
 [submodule "src/tamu-drtimothyaldendavis-suitesparse"]
 	path = src/tamu-drtimothyaldendavis-suitesparse

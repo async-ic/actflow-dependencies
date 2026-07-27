@@ -19,13 +19,13 @@
 echo "#############################"
 echo "# BLAS"
 
-cd $EDA_SRC/org-xianyi-openblas
+cd $EDA_SRC/cas-openmathlib-openblas
 # license
-cp LICENSE $ACT_HOME/license/LICENSE_org-xianyi-openblas
+cp LICENSE $ACT_HOME/license/LICENSE_cas-openmathlib-openblas
 #if [ ! -d build ]; then
 #	mkdir build
 #fi
-#cd $EDA_SRC/org-xianyi-openblas/build
+#cd $EDA_SRC/cas-openmathlib-openblas/build
 #cmake \
 #-D CMAKE_INSTALL_PREFIX=$ACT_HOME \
 #-D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
@@ -52,7 +52,7 @@ case "$ARCH_LEVEL" in
 	*) OPENBLAS_TARGET= ;;
 esac
 
-make -j TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=64 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
+make -j TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=32 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make PREFIX=$ACT_HOME install  || exit 1
 cd $ACT_HOME/lib/
 ln -s libopenblas.so libblas.so
