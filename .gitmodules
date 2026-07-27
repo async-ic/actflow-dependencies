@@ -102,3 +102,9 @@
 	path = src/org-gnu-automake
 	url = https://git.savannah.gnu.org/git/automake.git
 	shallow = true
+[submodule "src/org-westes-flex"]
+	path = src/org-westes-flex
+	url = https://github.com/westes/flex.git
+[submodule "src/org-gnu-bison"]
+	path = src/org-gnu-bison
+	url = https://git.savannah.gnu.org/git/bison.git
