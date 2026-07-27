@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# deps: 060-trilinos, 004-flex, 006-bison, 050-fftw, 030-mpich (wrappers) | used by: downstream actsim (grab_xyce.sh)
+
 echo "#############################"
 echo "# xyce"
 
@@ -31,8 +33,13 @@ echo "building xyce"
 
 cd $EDA_SRC/sandia-xyce-xyce/build
 
+# build with the MPI wrappers: Trilinos (built with them) exports no explicit MPI
+# lib (Trilinos_MPI_LIBRARIES=""), so a plain-g++ link leaves MPI_* undefined.
 cmake \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
+-D CMAKE_C_COMPILER=mpicc \
+-D CMAKE_CXX_COMPILER=mpicxx \
+-D CMAKE_Fortran_COMPILER=mpif90 \
 -D CMAKE_BUILD_TYPE=Release \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
