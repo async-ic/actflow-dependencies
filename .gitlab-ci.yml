@@ -19,9 +19,43 @@ variables:
 # checkout build/test stages extract instead of re-cloning + re-fetching submodules
 prepare:sources:
   stage: prepare
-  image: centos:7.2.1511
+  image: almalinux:9
   needs: []
+  # gnu.org does not allow shallow fetching on commits that are in dead banches -> bison submodule
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_SUBMODULE_DEPTH: 1
+    GIT_SUBMODULE_PATHS: " src/org-kitware-cmake \
+ src/cas-openmathlib-openblas \
+ src/tamu-drtimothyaldendavis-suitesparse \
+ src/sandia-trilinos-trilinos \
+ src/sandia-xyce-xyce \
+ src/org-madler-zlib \
+ src/org-debian-ncurses \
+ src/org-debian-libedit \
+ src/org-tcltk-tcl \
+ src/org-tcltk-tk \
+ src/org-libffi-libffi \
+ src/org-boostorg-boost \
+ src/org-numactl-numactl \
+ src/org-fmtlib-fmt \
+ src/org-libeigen-eigen \
+ src/org-gnu-readline \
+ src/org-debian-fftw3 \
+ src/org-gnu-gcc \
+ src/org-pmodels-mpich \
+ src/lbl-xiaoyeli-superlu_dist \
+ src/lbl-xiaoyeli-superlu \
+ src/umn-karypislab-parmetis \
+ src/umn-karypislab-gklib \
+ src/umn-karypislab-metis \
+ src/org-gnu-automake \
+ src/org-westes-flex "
   script:
+    - yum install git -y
+    - git submodule update --init --depth 1 src/org-gnu-bison
+    - (cd src/org-gnu-bison; git submodule init submodules/autoconf; cd submodules/autoconf; git clone --branch v2.71 git://git.sv.gnu.org/autoconf.git)
+    - (cd src/org-gnu-bison; git submodule update --init --depth 1 gnulib)
     - bash packaging/001-pack_sources.sh
   artifacts:
     paths:
