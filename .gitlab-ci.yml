@@ -54,7 +54,8 @@ prepare:sources:
   script:
     - yum install git -y
     - git submodule update --init --depth 1 src/org-gnu-bison
-    - (cd src/org-gnu-bison; git submodule init submodules/autoconf; cd submodules/autoconf; git clone --branch v2.71 git://git.sv.gnu.org/autoconf.git)
+    # manual clone is untracked, survives git-clean on reused build dirs -> wipe before re-cloning so a second run does not abort on the existing path
+    - (cd src/org-gnu-bison; git submodule init submodules/autoconf; cd submodules/autoconf; rm -rf autoconf; git clone --depth 1 --branch v2.71 git://git.sv.gnu.org/autoconf.git)
     - (cd src/org-gnu-bison; git submodule update --init --depth 1 gnulib)
     - bash packaging/001-pack_sources.sh
   artifacts:
