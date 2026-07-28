@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: 007-gcc, 008-automake (autogen) | used by: actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
+# deps: 007-gcc, 003-automake (autogen) | used by: actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
 
 echo "#############################"
 echo "# numactl"

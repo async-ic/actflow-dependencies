@@ -60,6 +60,9 @@ prepare:sources:
     - rm -rf src/org-gnu-bison/submodules/autoconf
     - git clone --depth 1 --branch v2.71 git://git.sv.gnu.org/autoconf.git src/org-gnu-bison/submodules/autoconf
     - (cd src/org-gnu-bison; git submodule update --init --recursive --depth 1 gnulib)
+    # freeze bison's version into .tarball-version: build stage has no .git and the
+    # submodule is shallow (no tags), so git-version-gen would yield UNKNOWN. read NEWS.
+    - (cd src/org-gnu-bison; sed -n 's/^\* Noteworthy changes in release \([0-9][0-9.]*\).*/\1/p' NEWS | head -1 > .tarball-version)
     - bash packaging/001-pack_sources.sh
     # sources move through the package registry (job artifacts exceed the size limit);
     # propagate the one minted version to every downstream job via dotenv

@@ -14,12 +14,12 @@
 # limitations under the License.
 #
 
-# deps: 007-gcc; host autoconf | used by: autogen/autoreconf deps 022-libffi, 030-mpich, 044-numactl
+# deps: host autoconf/perl/cc | used by: 006-bison, 022-libffi, 030-mpich, 044-numactl
 
-# builds automake 1.17 into $ACT_HOME (first on PATH) for deps needing a newer
-# automake than the host 1.13 - mpich v5.0.1 autogen leaves PAC_SUBCFG macros
-# unexpanded under 1.13. bootstrap generates the missing configure. build-only,
-# trimmed by 021.
+# builds automake 1.17 into $ACT_HOME (first on PATH); host 1.13 is too old for
+# 006-bison (AM_INIT_AUTOMAKE >=1.15) and mpich autogen (PAC_SUBCFG unexpanded).
+# numbered 003 to precede those: automake is perl, needs no compiler/flex/bison.
+# bootstrap generates the missing configure. build-only, trimmed by 021.
 
 echo "#############################"
 echo "# automake"

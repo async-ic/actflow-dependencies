@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: 007-gcc, 008-automake (autogen) | used by: downstream (FFI, runtime)
+# deps: 007-gcc, 003-automake (autogen) | used by: downstream (FFI, runtime)
 
 echo "#############################"
 echo "# libffi"
