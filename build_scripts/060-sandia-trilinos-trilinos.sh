@@ -31,6 +31,8 @@ cd $EDA_SRC/sandia-trilinos-trilinos/build
 
 # set the MPI wrappers explicitly (don't rely on PATH auto-detect); Trilinos builds
 # with them and exports no explicit MPI lib, so consumers (xyce 072) must match.
+# METIS_LIBRARY_NAMES lists GKlib too: static libmetis.a needs it for gk_* symbols,
+# else xyce's exe link fails undefined (order matters: metis before GKlib).
 cmake \
 -G "Unix Makefiles" \
 -D CMAKE_C_COMPILER=mpicc \
@@ -82,6 +84,7 @@ cmake \
 -D TPL_ENABLE_METIS=ON \
 -D METIS_LIBRARY_DIRS=$ACT_HOME/lib \
 -D TPL_METIS_INCLUDE_DIRS=$ACT_HOME/include \
+-D METIS_LIBRARY_NAMES="metis;GKlib" \
 -D TPL_ENABLE_BLAS=ON \
 -D TPL_ENABLE_LAPACK=ON \
 -D TPL_ENABLE_MPI=ON \
