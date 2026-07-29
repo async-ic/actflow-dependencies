@@ -87,6 +87,12 @@ prepare:sources:
     - bash packaging/005-pack_binaries.sh
     # push the binaries to the registry (no job artifact); release just links to them
     - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
+  # per-build logs kept off the truncated console; upload on failure too so builds stay diagnosable
+  artifacts:
+    when: always
+    paths:
+      - logs/
+    expire_in: 1 week
 
 .build_alma9: &build_alma9
   image: almalinux:9
@@ -103,6 +109,12 @@ prepare:sources:
     - bash packaging/005-pack_binaries.sh
     # push the binaries to the registry (no job artifact); release just links to them
     - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
+  # per-build logs kept off the truncated console; upload on failure too so builds stay diagnosable
+  artifacts:
+    when: always
+    paths:
+      - logs/
+    expire_in: 1 week
 
 build:x86-64-v2:
   <<: *build_centos7
