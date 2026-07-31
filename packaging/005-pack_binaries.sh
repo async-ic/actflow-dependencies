@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+set -eo pipefail
+
 if [ x$ACT_HOME = x ]
 then
 	echo "Please set the environment variable ACT_HOME to the install directory"
@@ -32,5 +34,6 @@ VERSION="$(cat actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="
 PKG="actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_${VERSION}.tar.gz"
 mv actflow_dependency_build_* $ACT_HOME/
 cd $ACT_HOME/..
-tar -I 'gzip -9' -cf "$WORK_DIR/$PKG" $(realpath --relative-to ./ $ACT_HOME)
+# pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
+tar -cf - $(realpath --relative-to ./ $ACT_HOME) | gzip -9 > "$WORK_DIR/$PKG"
 ls -lh "$WORK_DIR/$PKG"
