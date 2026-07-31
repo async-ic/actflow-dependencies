@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark
 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +16,14 @@
 
 if [ -d "../tests" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 echo "#############################"
-echo "# tcl test for linking errors"
+echo "# mpich test for linking errors"
 
 source tests/test_helper.sh
 
-lookup_binary "tclsh"
+# mpi{cc,cxx,f90} are wrapper scripts (not ELF), so check the ELF launcher/tool instead
+lookup_binary "mpiexec.hydra"
+lookup_binary "mpichversion"
 
-lookup_shared_library "libtcl9.0.so"
+lookup_shared_library "libmpi.so"
+lookup_shared_library "libmpicxx.so"
+lookup_shared_library "libmpifort.so"
