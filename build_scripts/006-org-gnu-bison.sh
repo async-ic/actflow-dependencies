@@ -33,6 +33,10 @@ echo
 cd $EDA_SRC/org-gnu-bison
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-bison
 ./bootstrap --skip-po --no-git --gnulib-srcdir="$EDA_SRC/org-gnu-bison/gnulib" || exit 1
-./configure --prefix=$ACT_HOME CFLAGS="-std=gnu11 ${CFLAGS}" || exit 1
+# --enable-relocatable: bison bakes $prefix/share/bison as its datadir; without this its
+# relocate2() is a no-op (see gnulib relocatable.h) so the compiled-in CI build path is
+# used verbatim and m4sugar.m4 is unfound once ACT_HOME moves. Enabled, it derives the
+# datadir from the executable location at runtime (matches the bundle's $ORIGIN rpath).
+./configure --prefix=$ACT_HOME --enable-relocatable CFLAGS="-std=gnu11 ${CFLAGS}" || exit 1
 make -j || exit 1
 make install || exit 1

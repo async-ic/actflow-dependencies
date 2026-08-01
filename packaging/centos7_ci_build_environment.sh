@@ -15,6 +15,12 @@ if [ -z $ACT_HOME ]; then
 fi
 echo "ACT_HOME $ACT_HOME"
 
+# gcc16 (from 007) must stay ahead in PATH, else deps build old-abi. no dup stacking.
+case ":${PATH}:" in
+    ":${ACT_HOME}/bin:"*) ;;
+    *) export PATH="${ACT_HOME}/bin:${PATH}" ;;
+esac
+
 if [ -z $ARCH_LEVEL ]; then
     export ARCH_LEVEL=x86-64-v2
 fi
@@ -26,9 +32,8 @@ if [ -z $ABI_LEVEL ]; then
 fi
 echo "ABI_LEVEL $ABI_LEVEL"
 
-# guard: re-sourcing runs twice per job, don't stack PATH/flags
+# guard: re-sourcing runs twice per job, don't stack flags (PATH handled above)
 if [ -z $ACTFLOW_ENV_LOADED ]; then
-    export PATH=${ACT_HOME}/bin:${PATH}
     # explicit -O3/-fPIC: CFLAGS overrides each tool's own default optimization/PIC flags
     export CFLAGS="-march=${ARCH_LEVEL} -O3 -fPIC ${CFLAGS}"
     export CXXFLAGS="-march=${ARCH_LEVEL} -O3 -fPIC ${CXXFLAGS}"

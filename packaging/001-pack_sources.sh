@@ -33,6 +33,6 @@ VERSION="${CI_COMMIT_TAG:-}"
 [ -n "$VERSION" ] || VERSION="$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
 echo "$VERSION" > actflow_dep.version
 # pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
-tar --exclude-vcs -cf - ./* | gzip -9 > "actflow_dependencies_sources_${VERSION}.tar.gz"
+tar --exclude-vcs --exclude='./actflow_dependencies_sources_*.tar.gz' -cf - ./* | gzip -9 > "actflow_dependencies_sources_${VERSION}.tar.gz"
 ls -lh "actflow_dependencies_sources_${VERSION}.tar.gz"
 
