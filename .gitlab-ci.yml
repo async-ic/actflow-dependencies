@@ -158,9 +158,10 @@ build:x86-64-v2:
   # src/), so no sources download here. GIT_SUBMODULE_STRATEGY stays per-job: a job's own
   # variables: replaces this anchor's under the << merge, so it must be set there, not here
   before_script:
-    # opensuse/leap base image ships without tar/gzip/make
-    - if command -v zypper >/dev/null 2>&1; then zypper --non-interactive install -y make tar gzip; fi
-    # only the binaries come from the registry (the helper installs a downloader on minimal images)
+    # per-image TEST_DEPS_INSTALL_CMD (set in the matrix) provides a modern-TLS curl/wget for
+    # the registry fetch: apt images ship none, centos7's CA bundle is stale (refresh via
+    # vault). rpm images already carry a usable curl, so they keep the "true" default.
+    - eval "$TEST_DEPS_INSTALL_CMD"
     - bash packaging/gitlab-registry-transfer.sh down "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
   script:
     - bash packaging/000-check_arch_level.sh
@@ -178,18 +179,22 @@ test:x86-64-v2:
   variables:
     ARCH_LEVEL: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
+    TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
   parallel:
     matrix:
-      - DISTRO_IMAGE:
-          - centos:7.2.1511        # kernel 3.10
-          - rockylinux/rockylinux:8 # kernel 4.18
-          - almalinux:9           # kernel 5.14
-          - almalinux:10          # kernel 6.12
-          - debian:oldoldstable     # bullseye, kernel 5.10
-          - ubuntu:20.04            # kernel 5.4
-          - ubuntu:18.04            # kernel 4.15
-          - ubuntu:16.04            # kernel 4.4
-          - fedora:20               # kernel 3.11
+      - DISTRO_IMAGE: centos:7.2.1511         # kernel 3.10
+        TEST_DEPS_INSTALL_CMD: "sed -i 's/^mirrorlist=/#mirrorlist=/g; s|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo && yum install -y ca-certificates"
+      - DISTRO_IMAGE: rockylinux/rockylinux:8 # kernel 4.18
+      - DISTRO_IMAGE: almalinux:9             # kernel 5.14
+      - DISTRO_IMAGE: debian:oldoldstable     # bullseye, kernel 5.10
+        TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+      - DISTRO_IMAGE: ubuntu:20.04            # kernel 5.4
+        TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+      - DISTRO_IMAGE: ubuntu:18.04            # kernel 4.15
+        TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+      - DISTRO_IMAGE: ubuntu:16.04            # kernel 4.4
+        TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+      - DISTRO_IMAGE: fedora:25               # kernel 4.8 (oldest whose TLS stack can still reach the registry)
   image: $DISTRO_IMAGE
 
 #test:x86-64-v3:
