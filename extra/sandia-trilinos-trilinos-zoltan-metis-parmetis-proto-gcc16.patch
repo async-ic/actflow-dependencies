@@ -1,0 +1,18 @@
+METIS-only builds call Zoltan_ParMetis from third_library.c's ZOLTAN_METIS
+branch (parmetis_interface.c is compiled for METIS or ParMETIS), but the
+prototype was guarded by ZOLTAN_PARMETIS alone -> implicit declaration, fatal
+under gcc16. Widen the guard to match the call site and the CMake condition.
+
+--- packages/zoltan/src/lb/lb_const.h
++++ packages/zoltan/src/lb/lb_const.h
+@@ -290,9 +290,9 @@
+ extern ZOLTAN_LB_FN Zoltan_RCB;
+ extern ZOLTAN_LB_FN Zoltan_Octpart;
+ extern ZOLTAN_LB_FN Zoltan_Graph;
+-#ifdef ZOLTAN_PARMETIS
++#if defined(ZOLTAN_PARMETIS) || defined(ZOLTAN_METIS)
+ extern ZOLTAN_LB_FN Zoltan_ParMetis;
+ #endif
+ #if defined(ZOLTAN_SCOTCH) || defined(ZOLTAN_PTSCOTCH)
+ extern ZOLTAN_LB_FN Zoltan_Scotch;
+ #endif
