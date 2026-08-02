@@ -40,4 +40,6 @@ cmake \
 make -j4 || exit 1
 make install || exit 1
  
- ln -s $ACT_HOME/include/eigen3/Eigen $ACT_HOME/include/Eigen
+# relative link: an absolute $ACT_HOME target bakes the build-time path and dangles after
+# relocation (also blocks Dali's cmake `file(INSTALL)` into include/Eigen).
+ ln -s eigen3/Eigen $ACT_HOME/include/Eigen

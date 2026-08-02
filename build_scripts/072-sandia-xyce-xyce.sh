@@ -60,4 +60,12 @@ make install || exit 1
 
 wget --quiet https://raw.githubusercontent.com/asyncvlsi/actsim/master/grab_xyce.sh || exit 1
 bash grab_xyce.sh ./  || exit 1
+# relocate xyce.in: grab_xyce.sh copies Xyce's build link.txt verbatim, baking absolute
+# build paths. actsim `include`s xyce.in in its Makefile ($(ACT_HOME) defined), so rewrite
+# the install prefix to $(ACT_HOME), the xyce build-src rpath to the installed lib dir, and
+# the bare libxyce.so to -lxyce (resolved via actsim's -L$(ACT_HOME)/lib).
+sed -i -e "s|${ACT_HOME}|\$(ACT_HOME)|g" \
+       -e "s|${EDA_SRC}/sandia-xyce-xyce/build/src|\$(ACT_HOME)/lib|g" \
+       -e "s| libxyce.so | -lxyce |g" \
+       xyce.in
 mv xyce.in $ACT_HOME/include/
