@@ -61,19 +61,15 @@ export PATH=$BOOTSTRAP_ROOT/stage1/bin:$PATH
 export CC=gcc CXX=g++
 # CFLAGS/LDFLAGS on configure cover gcc's own host tools; target runtime libs
 # (libstdc++/libgfortran/...) are governed by *_FOR_TARGET instead.
-# rpath is a '$'-free placeholder, not the real value: gcc's recursive make
-# forwarding mangles a literal '$ORIGIN' (both here and in BOOT_LDFLAGS below).
-# chrpath overwrites it with the real rpath post-install, see below.
+# no build-time rpath: gcc's recursive make mangles a literal '$ORIGIN', and patchelf
+# adds the real rpath post-install below (it can add one to binaries that have none).
 $EDA_SRC/org-gnu-gcc/configure --prefix=$ACT_HOME --libdir=$ACT_HOME/lib \
 	--enable-languages=c,c++,fortran --disable-multilib --disable-libsanitizer --disable-libitm --disable-nls --with-pic \
 	CFLAGS_FOR_TARGET="-I$ACT_HOME/include ${CFLAGS}" \
 	CXXFLAGS_FOR_TARGET="-I$ACT_HOME/include ${CXXFLAGS}" \
-	LDFLAGS_FOR_TARGET="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=RPATH_PLACEHOLDER_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" || exit 1
-# BOOT_LDFLAGS must be a `make` argument: gcc's configure doesn't substitute
-# it, only make's STAGE1_LDFLAGS/POSTSTAGE1_LDFLAGS combination picks it up.
-BOOT_LDFLAGS="-Wl,-rpath=RPATH_PLACEHOLDER_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-make BOOT_LDFLAGS="$BOOT_LDFLAGS" -j$(nproc) || exit 1
-make BOOT_LDFLAGS="$BOOT_LDFLAGS" install-strip || exit 1
+	LDFLAGS_FOR_TARGET="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
+make -j$(nproc) || exit 1
+make install-strip || exit 1
 
 # symlink cc->gcc: gcc ships no 'cc', else cmake probes the host cc (gcc 11) and
 # mixes toolchains -> LTO archive mismatch (metis <-> parmetis).
@@ -92,12 +88,13 @@ if [ -d $ACT_HOME/lib64 ]; then
 	sed -i 's|/lib/\.\./lib64|/lib|g' $ACT_HOME/lib/*.la
 fi
 
-# patch the real rpath over the placeholder on every ELF file that got one;
-# relative depth to lib/ varies by location, so it's computed per file.
+# patch the real rpath over the placeholder on every ELF; relative depth to lib/ varies by
+# location, so it's computed per file. Must run here (not the final build-wide patchelf
+# pass): gcc is the compiler for 010-072, so it needs its runtime libs before those run.
 find $ACT_HOME -type f -print0 | while IFS= read -r -d '' f; do
-	chrpath "$f" >/dev/null 2>&1 || continue
-	chrpath -r "\$ORIGIN/$(realpath --relative-to="$(dirname "$f")" "$ACT_HOME/lib")" "$f" || exit 1
-done || exit 1
+	head -c4 "$f" 2>/dev/null | grep -q ELF || continue
+	patchelf --set-rpath "\$ORIGIN/$(realpath --relative-to="$(dirname "$f")" "$ACT_HOME/lib")" "$f" 2>/dev/null || true
+done
 
 # libbacktrace isn't installed by gcc's own "make install" (an internal helper
 # lib, not a public target library) - build it standalone, using the gcc we

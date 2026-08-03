@@ -22,8 +22,14 @@ cd $EDA_SRC/org-debian-ncurses
 # --disable-widec: ncurses 6.6 defaults to ABI 6, which enables widec and names the
 # libs libncursesw/libtinfow; classic consumers (libedit, readline) look for -lncurses/
 # -ltinfo and fail. non-wide restores those names (the pre-6.6 ABI-5 default behaviour).
+# terminfo relocation: the DB dir is baked to the build $prefix (dead after relocation) and
+# ncurses ignores $TERMINFO/$TERMINFO_DIRS when euid==0, so as root (the CI) libedit/readline
+# warn "Cannot read termcap database". --enable-root-environ makes it honour $TERMINFO as
+# root (safe here, nothing is setuid), so pointing $TERMINFO at the relocated share/terminfo
+# resolves terminals again. (prefer --with-fallbacks eventually; blocked, see TODO.md.)
 ./configure \
   --disable-widec \
+  --enable-root-environ \
   --with-cxx-binding \
   --with-cxx-shared \
   --with-xterm-kbs=del \

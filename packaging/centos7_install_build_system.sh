@@ -9,7 +9,7 @@ fix_centos_repos_for_vault() {
 
 fix_centos_repos_for_vault
 # upgraded: base image's CA bundle predates GitHub's TLS cert, breaks https downloads otherwise
-yum install -y centos-release-scl git wget yum-utils ca-certificates
+yum install -y centos-release-scl epel-release git wget yum-utils ca-certificates
 fix_centos_repos_for_vault
 
 yum-config-manager --enable rhel-server-rhscl-7-rpms
@@ -18,5 +18,6 @@ yum-config-manager --disable centos-sclo-sclo
 
 echo "repo setup"
 # gmp/mpfr/mpc/zlib devel: needed to configure/build the gcc bootstrap in 007-org-gnu-gcc.sh
-echo "yum install -y devtoolset-11 m4 autoconf automake bison flex gperf libtool python3 csh patch texinfo help2man gettext-devel po4a gmp-devel mpfr-devel libmpc-devel zlib-devel chrpath gzip | cat" | bash
+# patchelf (final rpath pass in packaging/003-build.sh) is only in EPEL on CentOS 7
+echo "yum install -y devtoolset-11 m4 autoconf automake bison flex gperf libtool python3 csh patch texinfo help2man gettext-devel po4a gmp-devel mpfr-devel libmpc-devel zlib-devel patchelf gzip | cat" | bash
 echo "install done"
