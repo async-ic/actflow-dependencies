@@ -298,4 +298,4 @@ release:
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
 
       # retention: keep 5 newest dated versions + one per 60 days, delete the rest
-      bash packaging/007-cleanup_old_packages.sh "${RELEASE_VERSION}" || true
+      sh packaging/007-cleanup_old_packages.sh "${RELEASE_VERSION}" || true

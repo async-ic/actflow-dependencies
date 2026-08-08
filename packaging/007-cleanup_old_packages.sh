@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ole Richter - Technical University of Denmark
 #
@@ -32,9 +32,9 @@ versions=$(
   while :; do
     resp=$(curl -sf --header "$HDR" \
       "$API/packages?package_type=generic&package_name=$PKG_NAME&per_page=100&page=$page&order_by=created_at&sort=desc") || break
-    n=$(jq 'length' <<<"$resp")
+    n=$(printf '%s' "$resp" | jq 'length')
     [ "$n" -eq 0 ] && break
-    jq -r '.[] | "\(.created_at) \(.id) \(.version)"' <<<"$resp"
+    printf '%s' "$resp" | jq -r '.[] | "\(.created_at) \(.id) \(.version)"'
     [ "$n" -lt 100 ] && break
     page=$((page + 1))
   done | grep -E ' [0-9]{4}-[0-9]{2}-[0-9]{2}_' | sort -r

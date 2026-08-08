@@ -19,29 +19,51 @@
 echo "#############################"
 echo "# ncurses"
 cd $EDA_SRC/org-debian-ncurses
+# Shared configure args for both passes.
 # --disable-widec: ncurses 6.6 defaults to ABI 6, which enables widec and names the
 # libs libncursesw/libtinfow; classic consumers (libedit, readline) look for -lncurses/
 # -ltinfo and fail. non-wide restores those names (the pre-6.6 ABI-5 default behaviour).
-# terminfo relocation: the DB dir is baked to the build $prefix (dead after relocation) and
-# ncurses ignores $TERMINFO/$TERMINFO_DIRS when euid==0, so as root (the CI) libedit/readline
-# warn "Cannot read termcap database". --enable-root-environ makes it honour $TERMINFO as
-# root (safe here, nothing is setuid), so pointing $TERMINFO at the relocated share/terminfo
-# resolves terminals again. (prefer --with-fallbacks eventually; blocked, see TODO.md.)
-./configure \
-  --disable-widec \
-  --enable-root-environ \
-  --with-cxx-binding \
-  --with-cxx-shared \
-  --with-xterm-kbs=del \
-  --without-ada \
-  --without-manpages \
-  --with-shared \
-  --with-termlib \
-  --with-versioned-syms \
-  --without-debug \
-  --prefix $ACT_HOME \
-  CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" \
-  LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" \
+# --enable-root-environ: honour $TERMINFO as root (nothing setuid here) - a secondary
+# path for terminals outside the compiled-in fallback set below.
+common_cfg=(
+  --disable-widec
+  --enable-root-environ
+  --with-cxx-binding
+  --with-cxx-shared
+  --with-xterm-kbs=del
+  --without-ada
+  --without-manpages
+  --with-shared
+  --with-termlib
+  --with-versioned-syms
+  --without-debug
+  --prefix "$ACT_HOME"
+  CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}"
+  LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib"
+)
+
+# Two-pass build for compiled-in terminfo fallbacks:
+# the compiled DB dir is baked to the build $prefix (dead after relocation) and ncurses
+# ignores $TERMINFO when euid==0, so as root (the CI) libedit/readline-linked tools warn
+# "Cannot read termcap database". --with-fallbacks compiles the common terminals into
+# libtinfo so they resolve with no DB and no env - robust against relocation and root.
+# Its generator (MKfallback.sh) needs a version-matched tic/infocmp to compile 6.6's
+# terminfo.src (host tic 5.9 is too old); pass 1 installs them, pass 2 uses them.
+./configure "${common_cfg[@]}" || exit 1
+make -j || exit 1
+make install || exit 1
+
+# pass 2: regenerate with fallbacks using the just-installed 6.6 tic/infocmp. MKfallback
+# reads the freshly compiled entries via `infocmp -A <tmpdir>` (explicit path), so the
+# root/$TERMINFO restriction does not apply during generation. xterm/xterm-256color are
+# omitted: their use=-resolved entries exceed terminfo's 4096-byte limit so tic can't
+# stage them (they aren't in the on-disk DB either); dumb (the CI's $TERM) + the vt/
+# screen/ansi set below are what headless tools need and all fit.
+make distclean || exit 1
+./configure "${common_cfg[@]}" \
+  --with-fallbacks=dumb,linux,vt100,ansi,screen,screen-256color \
+  --with-tic-path="$ACT_HOME/bin/tic" \
+  --with-infocmp-path="$ACT_HOME/bin/infocmp" \
   || exit 1
 make -j || exit 1
 make install || exit 1
