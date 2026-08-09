@@ -108,3 +108,7 @@
 [submodule "src/org-gnu-bison"]
 	path = src/org-gnu-bison
 	url = https://git.savannah.gnu.org/git/bison.git
+[submodule "src/org-llvm-llvm-project"]
+	path = src/org-llvm-llvm-project
+	url = https://github.com/llvm/llvm-project.git
+	branch = release/14.x

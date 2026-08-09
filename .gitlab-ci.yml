@@ -49,6 +49,7 @@ prepare:sources:
  src/org-numactl-numactl \
  src/org-fmtlib-fmt \
  src/org-libeigen-eigen \
+ src/org-llvm-llvm-project \
  src/org-gnu-readline \
  src/org-debian-fftw3 \
  src/org-gnu-gcc \
@@ -91,11 +92,14 @@ prepare:sources:
     - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
     - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
     - source packaging/centos7_ci_build_environment.sh
-    - bash packaging/003-build.sh
+    - bash packaging/002-build.sh
     - touch "actflow_dependency_build_$(cat actflow_dep.version)"
-    - bash packaging/005-pack_binaries.sh
+    - bash packaging/003-pack_binaries.sh
+    - bash packaging/004-build_testing.sh
+    - bash packaging/005-pack_binaries_testing.sh
     # push the binaries to the registry (no job artifact); release just links to them
     - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_testing_package_${ARCH_LEVEL}.tar.gz"
   # per-build logs kept off the truncated console; upload on failure too so builds stay diagnosable
   artifacts:
     when: always
@@ -113,11 +117,14 @@ prepare:sources:
     - source packaging/alma9_ci_build_environment.sh
     - bash packaging/alma9_install_build_system.sh
     - source packaging/alma9_ci_build_environment.sh
-    - bash packaging/003-build.sh
+    - bash packaging/002-build.sh
     - touch "actflow_dependency_build_$(cat actflow_dep.version)"
-    - bash packaging/005-pack_binaries.sh
+    - bash packaging/003-pack_binaries.sh
+    - bash packaging/004-build_testing.sh
+    - bash packaging/005-pack_binaries_testing.sh
     # push the binaries to the registry (no job artifact); release just links to them
     - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_testing_package_${ARCH_LEVEL}.tar.gz"
   # per-build logs kept off the truncated console; upload on failure too so builds stay diagnosable
   artifacts:
     when: always
