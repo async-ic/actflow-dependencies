@@ -1,0 +1,80 @@
+#!/bin/sh
+
+#
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+if [ x$ACT_HOME = x ]
+then
+	echo "Please set the environment variable ACT_HOME to the install directory"
+        exit 1
+fi
+
+if [ x$EDA_SRC = x ]
+then
+	export EDA_SRC=$(pwd)/src
+fi
+
+if [ x$BUILD_GUI = x ]
+then
+        echo
+	echo "Building without GUI applications, to enable set BUILD_GUI='true' and have X11 and libGLU istalled"
+        echo
+fi
+
+if [ -f patched_dependencies* ]
+then
+        echo
+        echo "you are not in a clean repository state, build will fail, please run ./clean"
+        echo "or excecute the specific build script out of build_scripts that you want to rebuid"
+        echo
+        exit 1
+fi
+
+#
+# Per-build logs kept out of the CI console (long logs get truncated there);
+# CI uploads logs/ as artifacts so failures deep in the tree stay diagnosable.
+#
+mkdir -p logs
+
+#
+# Shell re-direct idiom (see below) routes a build's full stdout into its logfile
+# via gen_output.sh (console gets only progress markers) while preserving its exit
+# code:
+#   ((((command; echo $? >&3) | pipeline >&4) 3>&1) | (read res; exit $res)) 4>&1
+#   1. run command, capture its exit status on fd 3
+#   2. redirect its stdout to fd 4
+#   3. redirect fd 3 (the exit code) to stdout
+#   4. read the exit code from the pipeline and re-exit with it
+#   5. restore fd 4 to stdout
+#
+
+#run all builds in order
+for build in build_scripts/1*.sh; do
+   name=$(basename "$build" .sh)
+   echo
+   echo "#### $build ####"
+   echo
+   ((((bash "$build"; echo $? >&3) 2>logs/${name}.err | ./log_wrap.sh logs/${name}.log >&4) 3>&1) | (read res; exit $res)) 4>&1
+   if [ $? -ne 0 ]
+   then
+      echo "FAILED: $build (full log in logs/${name}.log, logs/${name}.err artifacts)"
+      echo "--- tail logs/${name}.log ---"; tail -n 40 logs/${name}.log
+      echo "--- tail logs/${name}.err ---"; tail -n 40 logs/${name}.err
+      exit 1
+   fi
+done
+
+echo
+echo "build done, for linker test run './test'"
+echo
