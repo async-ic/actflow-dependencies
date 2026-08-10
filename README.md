@@ -10,6 +10,8 @@ that only depend on libc and work with any linux/gnu OS with kernel version newe
 
 [![pipeline status](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/badges/main/pipeline.svg)](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/-/pipelines)
 
+[![Latest Release](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/-/badges/release.svg)](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/-/releases)
+
 the builds are tested to work with prestine versions (no extra packages installed) of 
 **x86-64-v2:**
 - centos:7.2+ # kernel 3.10
