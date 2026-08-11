@@ -22,6 +22,8 @@
 #   clang is never on the build PATH (only $ACT_HOME/bin is) and no other dep /
 #   actflow build can pick it up. Consumers opt in via -DLLVM_DIR; runtime adds
 #   $ACT_HOME/llvm/bin to PATH. rpath fixed by packaging/004-build_testing.sh's ELF pass.
+# - gcc16: LLVM 14 headers miss <cstdint> (uintNN_t) => -include cstdint.
+# - make || exit 1: trailing `unset` (exit 0) else masks failure, ships llvm-less pkg.
 
 echo "#############################"
 echo "#build llvm"
@@ -40,6 +42,7 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D CMAKE_INSTALL_PREFIX=$ACT_HOME/llvm \
   -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
   -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
+  -D CMAKE_CXX_FLAGS="${CXXFLAGS} -include cstdint" \
   -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
   -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
   -D LLVM_INCLUDE_BENCHMARKS=OFF \
@@ -54,8 +57,8 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D LLVM_DISTRIBUTION_COMPONENTS="opt;clang;clang-resource-headers;llvm-config;llvm-headers;cmake-exports" \
   -G "Unix Makefiles" \
   ../llvm
-  make -j4 distribution
+  make -j4 distribution || exit 1
 cd $EDA_SRC/org-llvm-llvm-project/build || exit 1
-make install-distribution
+make install-distribution || exit 1
 unset LD_LIBRARY_PATH
 
