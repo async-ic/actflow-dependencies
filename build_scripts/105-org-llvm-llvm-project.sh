@@ -26,14 +26,14 @@
 echo "#############################"
 echo "#build llvm"
 
-cd $EDA_SRCDIR/org-llvm-llvm-project
+cd $EDA_SRC/org-llvm-llvm-project || exit 1
 cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
 
   #echo "no CI => building, this will take a long time"
   if [ ! -d build ]; then
 	mkdir build
   fi
-  cd $EDA_SRCDIR/org-llvm-llvm-project/build
+  cd $EDA_SRC/org-llvm-llvm-project/build || exit 1
   export LD_LIBRARY_PATH=$ACT_HOME/lib
   cmake \
   -D LLVM_ENABLE_RTTI=ON \
@@ -55,7 +55,7 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -G "Unix Makefiles" \
   ../llvm
   make -j4 distribution
-cd $EDA_SRCDIR/org-llvm-llvm-project/build
+cd $EDA_SRC/org-llvm-llvm-project/build || exit 1
 make install-distribution
 unset LD_LIBRARY_PATH
 

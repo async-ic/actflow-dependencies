@@ -300,7 +300,8 @@ release:
         --name "${RELEASE_TITLE}" \
         --description "${RELEASE_DESCRIPTION}" \
         --assets-link "{\"name\":\"actflow_dependencies_sources.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_sources.tar.gz\"}" \
-        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}"
+        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}" \
+        --assets-link "{\"name\":\"actflow_dependencies_testing_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_testing_package_x86-64-v2.tar.gz\"}"
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
 
