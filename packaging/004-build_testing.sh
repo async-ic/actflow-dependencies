@@ -5,9 +5,7 @@ if [ -d "../packaging" ]; then echo "please exec from repository root (one folde
 bash ./build_testing || exit 1
 
 # final portable-rpath pass: give every ELF under ACT_HOME a clean relative rpath to
-# ACT_HOME/lib, depth-aware (bin/lib one level down, gcc's cc1/plugins in libexec|lib/gcc/...
-# deeper). Replaces the per-package LDFLAGS/-Wl,-rpath hacks that mangle $ORIGIN through
-# libtool/autotools; patchelf sets it uniformly (cmake components already match).
+# ACT_HOME/lib. Replaces the per-package LDFLAGS/-Wl,-rpath hacks that mangle $ORIGIN semi sucsessful.
 find "$ACT_HOME" -type f | while read -r f; do
     head -c4 "$f" 2>/dev/null | grep -q ELF || continue
     rel=$(realpath --relative-to="$(dirname "$f")" "$ACT_HOME/lib")

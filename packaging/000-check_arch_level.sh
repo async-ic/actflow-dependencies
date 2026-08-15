@@ -1,8 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2026 Ole Richter - Technical University of Denmark, University of Groningen
-
+# Copyright 2026 Ole Richter - Technical University of Denmark
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +13,7 @@
 # limitations under the License.
 #
 
-# fail fast if the runner can't confirm ARCH_LEVEL support, instead of failing deep into build/test with a SIGILL.
+# fail fast if the runner can't confirm ARCH_LEVEL support.
 # ARCH_LEVEL is the literal compiler -march value, checked per platform:
 #   x86-64-v2            Linux/x86_64 - /proc/cpuinfo flags (works on any glibc/kernel)
 #   x86-64-v3/v4          Linux/x86_64 - ld.so hwcaps tag (glibc >= 2.33, flag set is large/version-sensitive)

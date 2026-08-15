@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2026, 2022 Ole Richter - Technical University of Denmark, University of Groningen
+# Copyright 2026, 2022 Ole Richter - Technical University of Denmark
 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# builds dependencies only required for internal packages.
 
 set -eo pipefail
 
@@ -34,6 +36,6 @@ VERSION="$(cat actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="
 PKG="actflow_dependencies_testing_package_${ARCH_LEVEL:-unknown-arch}_${VERSION}.tar.gz"
 # marker already relocated into $ACT_HOME by the base pack (003); do not re-move
 cd $ACT_HOME/..
-# pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
+# pipe not tar -I -> centos7
 tar -cf - $(realpath --relative-to ./ $ACT_HOME) | gzip -9 > "$WORK_DIR/$PKG"
 ls -lh "$WORK_DIR/$PKG"

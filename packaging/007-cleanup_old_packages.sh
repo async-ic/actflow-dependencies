@@ -4,11 +4,9 @@
 #
 # Retention for the generic 'actflow-dependencies' package registry: keep the 5
 # newest dated (YYYY-MM-DD_hash) versions, thin older ones to one per 60-day
-# window, delete the rest (and each deleted version's release + git tag). Only
-# dated versions are touched: tagged releases (any non-dated version) and the
+# window. Tagged releases (any non-dated version) and the
 # just-published $1 are always kept.
-# Best-effort: needs an api-scoped token in $CLEANUP_API_TOKEN (CI_JOB_TOKEN
-# cannot delete packages); a missing token or tools skips without failing the job.
+# Needs an api-scoped token in $CLEANUP_API_TOKEN.
 
 set -u
 KEEP_RECENT=5

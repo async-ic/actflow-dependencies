@@ -24,8 +24,7 @@ variables:
   GIT_SUBMODULE_DEPTH: 1
   ACT_HOME: ${CI_PROJECT_DIR}/opt/act
 
-# sources tarball required for copyleft-license compliance, and doubles as the single
-# checkout the build stage extracts instead of re-cloning + re-fetching submodules
+# sources for build + tarball required for copyleft-licenses.
 prepare:sources:
   stage: prepare
   image: almalinux:9
@@ -66,7 +65,7 @@ prepare:sources:
     - git submodule update --init --depth 1 src/org-gnu-bison
     # bison symlinks m4/m4.m4 (AC_PROG_GNU_M4) + data/m4sugar/*.m4 out of submodules/autoconf.
     # its pinned commit sits on a dead branch gnu.org won't shallow-serve, so clone a tag
-    # straight into the submodule path (wipe first so a rerun does not hit a non-empty dir).
+    # with the rebased commits.
     - rm -rf src/org-gnu-bison/submodules/autoconf
     - git clone --depth 1 --branch v2.71 git://git.sv.gnu.org/autoconf.git src/org-gnu-bison/submodules/autoconf
     - (cd src/org-gnu-bison; git submodule update --init --recursive --depth 1 gnulib)
@@ -87,13 +86,11 @@ prepare:sources:
   image: centos:7.2.1511
   script:
     - bash packaging/000-check_arch_level.sh
-    - source packaging/centos7_ci_build_environment.sh
     - bash packaging/centos7_install_build_system.sh
     - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
     - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
     - source packaging/centos7_ci_build_environment.sh
     - bash packaging/002-build.sh
-    - touch "actflow_dependency_build_$(cat actflow_dep.version)"
     - bash packaging/003-pack_binaries.sh
     - bash packaging/004-build_testing.sh
     - bash packaging/005-pack_binaries_testing.sh
@@ -114,11 +111,9 @@ prepare:sources:
     - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
   script:
     - bash packaging/000-check_arch_level.sh
-    - source packaging/alma9_ci_build_environment.sh
     - bash packaging/alma9_install_build_system.sh
     - source packaging/alma9_ci_build_environment.sh
     - bash packaging/002-build.sh
-    - touch "actflow_dependency_build_$(cat actflow_dep.version)"
     - bash packaging/003-pack_binaries.sh
     - bash packaging/004-build_testing.sh
     - bash packaging/005-pack_binaries_testing.sh
@@ -170,13 +165,9 @@ build:x86-64-v2:
 
 # distro portability matrix: each packaged variant tested against target OSes
 .test_script: &test_script
-  # superproject-only checkout gives the test scripts (tests read only $ACT_HOME, never
-  # src/), so no sources download here. GIT_SUBMODULE_STRATEGY stays per-job: a job's own
-  # variables: replaces this anchor's under the << merge, so it must be set there, not here
+  # superproject-only checkout gives the test scripts
   before_script:
-    # per-image TEST_DEPS_INSTALL_CMD (set in the matrix) provides a modern-TLS curl/wget for
-    # the registry fetch: apt images ship none, centos7's CA bundle is stale (refresh via
-    # vault). rpm images already carry a usable curl, so they keep the "true" default.
+    # per-image TEST_DEPS_INSTALL_CMD (set in the matrix) provides a modern-TLS curl/wget
     - eval "$TEST_DEPS_INSTALL_CMD"
     - bash packaging/gitlab-registry-transfer.sh down "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
   script:
@@ -186,8 +177,6 @@ build:x86-64-v2:
     - export ACT_HOME=$(pwd)/install/act
     - bash packaging/006-test.sh
 
-# distro kernel vs. almalinux:9 (5.14): v2 targets distros older than the alma9 build host,
-# v3/v4 target distros newer-or-equal to it (glibc built against alma9 can't run on older glibc)
 test:x86-64-v2:
   <<: *test_script
   stage: test

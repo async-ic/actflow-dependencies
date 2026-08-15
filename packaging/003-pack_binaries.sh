@@ -32,8 +32,8 @@ WORK_DIR=$(pwd)
 # reuse the pipeline-wide version (set in 001) so the name matches the registry key
 VERSION="$(cat actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="${CI_COMMIT_SHORT_SHA:-local}"
 PKG="actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_${VERSION}.tar.gz"
-mv actflow_dependency_build_* $ACT_HOME/
+cp actflow_dep.version $ACT_HOME/
 cd $ACT_HOME/..
-# pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
+# pipe not tar -I -> centos7
 tar -cf - $(realpath --relative-to ./ $ACT_HOME) | gzip -9 > "$WORK_DIR/$PKG"
 ls -lh "$WORK_DIR/$PKG"

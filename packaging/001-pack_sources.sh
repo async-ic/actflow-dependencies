@@ -21,13 +21,10 @@ echo "#### package the repository sources ####"
 echo
 
 # packaging and suppling the sources with working build scripts is required by multiple strong copyleft licenses
-# that we need to comply to
 
 if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
-# single version string shared by every pipeline job (the registry key the sources
-# and binaries are up-/downloaded under, and the release/git tag). Minted once here,
-# so a build spanning midnight cannot desync jobs on $(date). A tag pipeline publishes
+# single version string shared by every pipeline job. A tag publishes
 # under the tag, else YYYY-MM-DD_hash.
 VERSION="${CI_COMMIT_TAG:-}"
 [ -n "$VERSION" ] || VERSION="$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
