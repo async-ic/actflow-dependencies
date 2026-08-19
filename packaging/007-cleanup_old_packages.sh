@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Ole Richter - Technical University of Denmark
 #
-# Retention for the generic 'actflow-dependencies' package registry: keep the 5
-# newest dated (YYYY-MM-DD_hash) versions, thin older ones to one per 60-day
+# Retention for the generic 'actflow-dependencies' package registry: keep the 3
+# newest dated (YYYY-MM-DD_hash) versions, thin older ones to the oldest per 60-day
 # window. Tagged releases (any non-dated version) and the
 # just-published $1 are always kept.
 # Needs an api-scoped token in $CLEANUP_API_TOKEN.
 
 set -u
-KEEP_RECENT=5
+KEEP_RECENT=3
 THIN_SECONDS=$((60 * 86400))
 KEEP_VERSION="${1:-}"                       # version just published, never deleted
 API="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
@@ -38,20 +38,21 @@ versions=$(
   done | grep -E ' [0-9]{4}-[0-9]{2}-[0-9]{2}_' | sort -r
 )
 
-# keep the KEEP_RECENT newest; below that keep one per THIN_SECONDS. anchor tracks
-# the last kept timestamp - a candidate survives only if it is that much older.
-i=0; anchor=""
+# keep the KEEP_RECENT newest, plus the oldest version in each fixed THIN_SECONDS
+# window.
+recent=$(printf '%s\n' "$versions" | head -n "$KEEP_RECENT" | awk '{print $3}')
+last_bucket=""
 while read -r created id version; do
   [ -n "$version" ] || continue
   [ "$version" = "$KEEP_VERSION" ] && continue
+  printf '%s\n' "$recent" | grep -qxF "$version" && continue
   ts=$(date -d "$created" +%s)
-  i=$((i + 1))
-  if [ "$i" -le "$KEEP_RECENT" ]; then anchor=$ts; continue; fi
-  if [ -n "$anchor" ] && [ $((anchor - ts)) -ge "$THIN_SECONDS" ]; then anchor=$ts; continue; fi
+  bucket=$((ts / THIN_SECONDS))
+  if [ "$bucket" != "$last_bucket" ]; then last_bucket=$bucket; continue; fi
   echo "deleting old version: $version (id $id, $created)"
   curl -sf --request DELETE --header "$HDR" "$API/packages/$id" >/dev/null || echo "  warn: package $id delete failed"
   curl -sf --request DELETE --header "$HDR" "$API/releases/$version" >/dev/null 2>&1 || true
   curl -sf --request DELETE --header "$HDR" "$API/repository/tags/$version" >/dev/null 2>&1 || true
 done <<EOF
-$versions
+$(printf '%s\n' "$versions" | sort)
 EOF

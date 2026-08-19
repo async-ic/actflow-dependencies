@@ -30,7 +30,7 @@ if [ -d "../packaging" ]; then echo "please exec from repository root (one folde
 # move to the folder above act_home so the pathes inside the tar are nice
 WORK_DIR=$(pwd)
 # reuse the pipeline-wide version (set in 001) so the name matches the registry key
-VERSION="$(cat actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="${CI_COMMIT_SHORT_SHA:-local}"
+VERSION="$(head -n1 actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="${CI_COMMIT_SHORT_SHA:-local}"
 PKG="actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_${VERSION}.tar.gz"
 cp actflow_dep.version $ACT_HOME/
 cd $ACT_HOME/..

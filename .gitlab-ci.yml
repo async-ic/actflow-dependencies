@@ -18,6 +18,7 @@ stages:
   - build
   - test
   - release
+  - clean
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -76,7 +77,7 @@ prepare:sources:
     # sources move through the package registry (job artifacts exceed the size limit);
     # propagate the one minted version to every downstream job via dotenv
     - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_sources_*.tar.gz)" "actflow_dependencies_sources.tar.gz"
-    - echo "ACTFLOW_DEP_VERSION=$(cat actflow_dep.version)" > actflow_dep.env
+    - echo "ACTFLOW_DEP_VERSION=$(head -n1 actflow_dep.version)" > actflow_dep.env
   artifacts:
     reports:
       dotenv: actflow_dep.env
@@ -269,14 +270,11 @@ release:
     - test:x86-64-v2
 #    - test:x86-64-v3
 #    - test:x86-64-v4
-  before_script:
-    # jq + GNU date for the retention sweep (curl + release-cli ship in the image)
-    - apk add --no-cache jq coreutils >/dev/null 2>&1 || true
   script:
     - |
       # version was minted once in prepare and carried here via dotenv; a tag pipeline
       # publishes under the tag (kept forever), else it is YYYY-MM-DD_hash, which the
-      # retention sweep below thins. also the release git tag. the sources + binaries
+      # cleanup:packages sweep thins. also the release git tag. the sources + binaries
       # are already in the registry (uploaded by prepare + build), so only link them.
       RELEASE_VERSION="${ACTFLOW_DEP_VERSION}"
       PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${RELEASE_VERSION}"
@@ -294,5 +292,20 @@ release:
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
         # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
 
-      # retention: keep 5 newest dated versions + one per 60 days, delete the rest
-      sh packaging/007-cleanup_old_packages.sh "${RELEASE_VERSION}" || true
+# Retention sweep: own job gated on a successful release (needs:). A failed or skipped
+# release leaves it unrun, so the next green pipeline cleans up rather than deleting
+# against a half-published state. Version (kept version) via the prepare dotenv.
+cleanup:packages:
+  stage: clean
+  image: buildpack-deps:stable-scm # git+curl; jq + GNU date added below
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  needs:
+    - release
+  before_script:
+    - apt-get -q update -y >/dev/null && apt-get -q install -y jq >/dev/null
+  script:
+    - sh packaging/007-cleanup_old_packages.sh "${ACTFLOW_DEP_VERSION}"

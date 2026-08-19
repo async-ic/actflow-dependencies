@@ -12,7 +12,7 @@
 set -eu
 
 VERSION="${ACTFLOW_DEP_VERSION:-}"
-[ -n "$VERSION" ] || VERSION="$(cat actflow_dep.version 2>/dev/null || true)"
+[ -n "$VERSION" ] || VERSION="$(head -n1 actflow_dep.version 2>/dev/null || true)"
 [ -n "$VERSION" ] || { echo "registry: no version (ACTFLOW_DEP_VERSION unset and actflow_dep.version missing)" >&2; exit 1; }
 BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${VERSION}"
 
