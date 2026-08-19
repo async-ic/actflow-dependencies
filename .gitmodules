@@ -34,10 +34,6 @@
 	path = src/org-tcltk-tcl
 	url = https://github.com/tcltk/tcl.git
 	shallow = true
-[submodule "src/org-tcltk-tk"]
-	path = src/org-tcltk-tk
-	url = https://github.com/tcltk/tk.git
-	shallow = true
 [submodule "src/org-libffi-libffi"]
 	path = src/org-libffi-libffi
 	url = https://github.com/libffi/libffi.git

@@ -43,7 +43,6 @@ prepare:sources:
  src/org-debian-ncurses \
  src/org-debian-libedit \
  src/org-tcltk-tcl \
- src/org-tcltk-tk \
  src/org-libffi-libffi \
  src/org-boostorg-boost \
  src/org-numactl-numactl \
@@ -68,8 +67,6 @@ prepare:sources:
     # bison's submodules/autoconf pin can't be shallow-served (unadvertised SHA); 006-bison
     # symlinks it to the org-gnu-autoconf submodule at build time. only gnulib is fetched here.
     - (cd src/org-gnu-bison; git submodule update --init --recursive --depth 1 gnulib)
-    # autoconf + bison freeze their own .tarball-version from NEWS in 002/006 (build stage
-    # has no .git; git-version-gen would yield UNKNOWN).
     - bash packaging/001-pack_sources.sh
     # sources move through the package registry (job artifacts exceed the size limit);
     # propagate the one minted version to every downstream job via dotenv

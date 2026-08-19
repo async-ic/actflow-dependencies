@@ -4,12 +4,12 @@
 
 rm -f patched_dependencies*
 
-for source in $(pwd)/src/*; do
-    if [ -d $source ]; then
-        cd $source
-        git reset --hard
-        # -x: also remove gitignored build artifacts, stale ones break toolchain switches
-        git clean -d --force -x
-    fi
+for source in "$(pwd)"/src/*; do
+    # only initialized submodules (own .git); an uninitialized submodule is an empty dir
+    # with no .git, where git would walk UP and reset the SUPERPROJECT. git -C, no cd.
+    [ -e "$source/.git" ] || continue
+    git -C "$source" reset --hard
+    # -x: also remove gitignored build artifacts, stale ones break toolchain switches
+    git -C "$source" clean -d --force -x
 done
 
