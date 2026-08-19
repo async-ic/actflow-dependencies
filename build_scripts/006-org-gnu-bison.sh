@@ -14,12 +14,12 @@
 # limitations under the License.
 #
 
-# deps: 004-flex; host gcc (pre-007) | used by: 072-xyce (find_package BISON>=3.3)
+# deps: 002-autoconf, 004-flex; host gcc (pre-007) | used by: 072-xyce (find_package BISON>=3.3)
 
 # builds bison into $ACT_HOME (first on PATH) so find_package(BISON) uses it: xyce 7.10
 # needs bison >=3.3, centos7 host ships 3.0.4. build-only, 021 trims it. after 004-flex:
-# bison's scanner needs flex >=2.6. bison <=3.7.6 keeps AC_PREREQ 2.68 (host autoconf 2.69
-# ok); 3.8+ needs 2.71. bootstrap flags:
+# bison's scanner needs flex >=2.6. 3.8+ needs AC_PREREQ 2.71 (host autoconf 2.69 too old);
+# satisfied by 002-autoconf's 2.72 on PATH. bootstrap flags:
 # --no-git --gnulib-srcdir: git checkout ships no configure; bootstrap generates it from
 #   the bundled gnulib snapshot. sources are packed --exclude-vcs (no .git), so without
 #   --no-git bootstrap's git discovery escapes to the superproject's uninitialized
@@ -32,6 +32,14 @@ echo "#### bison ####"
 echo
 cd $EDA_SRC/org-gnu-bison
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-bison
+# packed --exclude-vcs: no .git; freeze bison's version from NEWS so git-version-gen
+# doesn't yield UNKNOWN.
+sed -n 's/^\* Noteworthy changes in release \([0-9][0-9.]*\).*/\1/p' NEWS | head -1 > .tarball-version
+# bison symlinks m4/m4.m4 + data/m4sugar/*.m4 out of submodules/autoconf; its pinned commit
+# can't be shallow-served (unadvertised SHA), so point it at the org-gnu-autoconf submodule
+# (2.72, built by 002). relative link resolves submodules/ -> sibling src/org-gnu-autoconf.
+rm -rf submodules/autoconf
+ln -s ../../org-gnu-autoconf submodules/autoconf
 ./bootstrap --skip-po --no-git --gnulib-srcdir="$EDA_SRC/org-gnu-bison/gnulib" || exit 1
 # --enable-relocatable: bison bakes $prefix/share/bison as its datadir; without this its
 # relocate2() is a no-op (see gnulib relocatable.h) so the compiled-in CI build path is

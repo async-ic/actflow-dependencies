@@ -17,9 +17,10 @@ this is the summary.
 
 ## 1. act-actflow-dependencies
 
-Toolchain (to `$ACT_HOME/bin`, on PATH; 004/006/008 build-only):
+Toolchain (to `$ACT_HOME/bin`, on PATH; 002/003/004/006 build-only):
+- 002 autoconf → 003, 006 · 003 automake → 006, 022-libffi, 030, 044
 - 004 flex → 006, 072 · 005 cmake → all cmake builds · 006 bison → 072
-- 007 gcc16 → everything after · 008 automake → 022-libffi, 030, 044
+- 007 gcc16 → everything after
 
 Libraries (built with gcc16):
 - 010 ncurses → 012, 020 · 010 zlib → 022-tcl, 042

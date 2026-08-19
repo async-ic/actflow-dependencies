@@ -98,6 +98,10 @@
 	path = src/umn-karypislab-metis
 	url = https://github.com/KarypisLab/METIS.git
 	shallow = true
+[submodule "src/org-gnu-autoconf"]
+	path = src/org-gnu-autoconf
+	url = https://git.savannah.gnu.org/git/autoconf.git
+	shallow = true
 [submodule "src/org-gnu-automake"]
 	path = src/org-gnu-automake
 	url = https://git.savannah.gnu.org/git/automake.git
