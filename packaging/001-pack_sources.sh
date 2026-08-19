@@ -50,6 +50,11 @@ if [ -f .gitmodules ] && git rev-parse --git-dir >/dev/null 2>&1; then
     printf "%s %s\n" "$sm_path" "$v"
   ' >> actflow_dep.version
 fi
+# gmp/mpfr/mpc for gcc's in-tree build (statically linked into cc1plus): fetch into the
+# gcc srcdir now so they are captured in the source bundle (copyleft: the shipped compiler
+# links them) and the offline build stage needs no network. --no-isl: Graphite unused.
+( cd src/org-gnu-gcc && ./contrib/download_prerequisites --no-isl )
+
 # pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
 tar --exclude-vcs --exclude='./actflow_dependencies_sources_*.tar.gz' -cf - ./* | gzip -9 > "actflow_dependencies_sources_${VERSION}.tar.gz"
 ls -lh "actflow_dependencies_sources_${VERSION}.tar.gz"
