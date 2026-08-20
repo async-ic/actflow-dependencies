@@ -20,37 +20,17 @@ stages:
   - release
   - clean
 
+# use internal mirrors to reduce trafic
+# redirect submodule clones to internal mirrors at fetch time (git >=2.31), keeping
+include:
+  - project: 'mirror/gitlab-profile'     
+    ref: main
+    file: '/git-mirror.yml'
+
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_SUBMODULE_DEPTH: 1
   ACT_HOME: ${CI_PROJECT_DIR}/opt/act
-  # redirect submodule clones to internal mirrors at fetch time (git >=2.31), keeping
-  # .gitmodules pointed at upstream. per-repo rules: mirror names != upstream basenames.
-  GIT_CONFIG_COUNT: "12"
-  GIT_CONFIG_KEY_0:   "url.https://lab.compute.dtu.dk/mirror/gnu/org-gnu-autoconf.git.insteadOf"
-  GIT_CONFIG_VALUE_0: "https://git.savannah.gnu.org/git/autoconf.git"
-  GIT_CONFIG_KEY_1:   "url.https://lab.compute.dtu.dk/mirror/gnu/org-gnu-automake.git.insteadOf"
-  GIT_CONFIG_VALUE_1: "https://git.savannah.gnu.org/git/automake.git"
-  GIT_CONFIG_KEY_2:   "url.https://lab.compute.dtu.dk/mirror/gnu/org-gnu-bison.git.insteadOf"
-  GIT_CONFIG_VALUE_2: "https://git.savannah.gnu.org/git/bison.git"
-  GIT_CONFIG_KEY_3:   "url.https://lab.compute.dtu.dk/mirror/gnu/org-gnu-readline.git.insteadOf"
-  GIT_CONFIG_VALUE_3: "https://git.savannah.gnu.org/git/readline.git"
-  GIT_CONFIG_KEY_4:   "url.https://lab.compute.dtu.dk/mirror/gnu/org-gnu-gcc.git.insteadOf"
-  GIT_CONFIG_VALUE_4: "git://gcc.gnu.org/git/gcc.git"
-  GIT_CONFIG_KEY_5:   "url.https://lab.compute.dtu.dk/mirror/gnu/org-gnu-gnulib.git.insteadOf"
-  GIT_CONFIG_VALUE_5: "git://git.savannah.gnu.org/gnulib.git"
-  GIT_CONFIG_KEY_6:   "url.https://lab.compute.dtu.dk/mirror/sandia/sandia-trilinos-trilinos.git.insteadOf"
-  GIT_CONFIG_VALUE_6: "https://github.com/trilinos/Trilinos.git"
-  GIT_CONFIG_KEY_7:   "url.https://lab.compute.dtu.dk/mirror/sandia/sandia-xyce-xyce.git.insteadOf"
-  GIT_CONFIG_VALUE_7: "https://github.com/xyce/xyce.git"
-  GIT_CONFIG_KEY_8:   "url.https://lab.compute.dtu.dk/mirror/tamu/tamu-drtimothyaldendavis-suitesparse.git.insteadOf"
-  GIT_CONFIG_VALUE_8: "https://github.com/DrTimothyAldenDavis/SuiteSparse.git"
-  GIT_CONFIG_KEY_9:   "url.https://lab.compute.dtu.dk/mirror/umn/umn-karypislab-gklib.git.insteadOf"
-  GIT_CONFIG_VALUE_9: "https://github.com/KarypisLab/GKlib.git"
-  GIT_CONFIG_KEY_10:   "url.https://lab.compute.dtu.dk/mirror/umn/umn-karypislab-metis.git.insteadOf"
-  GIT_CONFIG_VALUE_10: "https://github.com/KarypisLab/METIS.git"
-  GIT_CONFIG_KEY_11:   "url.https://lab.compute.dtu.dk/mirror/umn/umn-karypislab-parmetis.git.insteadOf"
-  GIT_CONFIG_VALUE_11: "https://github.com/karypislab/parmetis.git"
 
 # sources for build + tarball required for copyleft-licenses.
 prepare:sources:
@@ -58,42 +38,8 @@ prepare:sources:
   image: almalinux:9
   needs: []
   # gnu.org does not allow shallow fetching on commits that are in dead banches -> bison submodule
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-    GIT_SUBMODULE_DEPTH: 1
-    GIT_SUBMODULE_PATHS: " src/org-kitware-cmake \
- src/cas-openmathlib-openblas \
- src/tamu-drtimothyaldendavis-suitesparse \
- src/sandia-trilinos-trilinos \
- src/sandia-xyce-xyce \
- src/org-madler-zlib \
- src/org-debian-ncurses \
- src/org-debian-libedit \
- src/org-tcltk-tcl \
- src/org-libffi-libffi \
- src/org-boostorg-boost \
- src/org-numactl-numactl \
- src/org-fmtlib-fmt \
- src/org-libeigen-eigen \
- src/org-llvm-llvm-project \
- src/org-gnu-readline \
- src/org-debian-fftw3 \
- src/org-gnu-gcc \
- src/org-pmodels-mpich \
- src/lbl-xiaoyeli-superlu_dist \
- src/lbl-xiaoyeli-superlu \
- src/umn-karypislab-parmetis \
- src/umn-karypislab-gklib \
- src/umn-karypislab-metis \
- src/org-gnu-autoconf \
- src/org-gnu-automake \
- src/org-westes-flex "
   script:
     - yum install git bzip2 -y
-    - git submodule update --init --depth 1 src/org-gnu-bison
-    # bison's submodules/autoconf pin can't be shallow-served (unadvertised SHA); 006-bison
-    # symlinks it to the org-gnu-autoconf submodule at build time. only gnulib is fetched here.
-    - (cd src/org-gnu-bison; git submodule update --init --recursive --depth 1 gnulib)
     - bash packaging/001-pack_sources.sh
     # sources move through the package registry (job artifacts exceed the size limit);
     # propagate the one minted version to every downstream job via dotenv
