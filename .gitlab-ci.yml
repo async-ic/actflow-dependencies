@@ -20,8 +20,9 @@ stages:
   - release
   - clean
 
-# use internal mirrors to reduce trafic
-# redirect submodule clones to internal mirrors at fetch time (git >=2.31), keeping
+# use internal mirrors to reduce traffic &
+# gnu.org does not allow shallow fetching on commits that are in not advertised branch head -> bison submodule
+# redirect submodule clones to internal mirrors at fetch time (git >=2.31)
 include:
   - project: 'mirror/gitlab-profile'     
     ref: main
@@ -37,7 +38,6 @@ prepare:sources:
   stage: prepare
   image: almalinux:9
   needs: []
-  # gnu.org does not allow shallow fetching on commits that are in dead banches -> bison submodule
   script:
     - yum install git bzip2 -y
     - bash packaging/001-pack_sources.sh

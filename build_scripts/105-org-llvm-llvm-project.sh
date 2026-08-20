@@ -13,6 +13,9 @@
 # - libc++/libc++abi/libunwind runtimes are bundled (distribution cxx;cxxabi;unwind)
 #   so the fluid cxx reference builds with `clang++ -stdlib=libc++`: clang-14 is too
 #   old to parse the shipped gcc16 libstdc++, its matched libc++-14 compiles fine.
+#   cxx-headers is a runtimes sub-component, not a runtime_name (cxx/cxxabi/unwind
+#   auto-get top-level targets), so it must go in LLVM_RUNTIME_DISTRIBUTION_COMPONENTS
+#   to get a forwarding target; else `make distribution` errors "doesn't have a target".
 # - Version ceiling: fluid builds unmodified only up to LLVM 14 (14.0.6 OK;
 #   12/11 OK; 13 is a hole: ConstantAggregateZero::getNumElements). 15+ break on
 #   the new llvm::json vs nlohmann json clash (`using namespace llvm`), plus @16
@@ -57,7 +60,8 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D LLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
   -D LLVM_INCLUDE_EXAMPLES=OFF \
   -D LLVM_INCLUDE_TOOLS=ON \
-  -D LLVM_DISTRIBUTION_COMPONENTS="opt;clang;clang-resource-headers;llvm-config;llvm-headers;cmake-exports;cxx;cxx-headers;cxxabi;unwind" \
+  -D LLVM_DISTRIBUTION_COMPONENTS="opt;clang;clang-resource-headers;llvm-config;llvm-headers;cmake-exports;cxx;cxxabi;unwind" \
+  -D LLVM_RUNTIME_DISTRIBUTION_COMPONENTS="cxx-headers" \
   -G "Unix Makefiles" \
   ../llvm
   make -j4 distribution || exit 1
