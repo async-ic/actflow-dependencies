@@ -38,9 +38,10 @@
 	path = src/org-libffi-libffi
 	url = https://github.com/libffi/libffi.git
 	shallow = true
-[submodule "src/org-boostorg-boost"]
-	path = src/org-boostorg-boost
-	url = https://github.com/boostorg/boost.git
+[submodule "src/org-debian-boost"]
+	path = src/org-debian-boost
+	url = https://salsa.debian.org/debian/boost.git
+	branch = upstream
 	shallow = true
 [submodule "src/org-numactl-numactl"]
 	path = src/org-numactl-numactl

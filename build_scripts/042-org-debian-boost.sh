@@ -19,8 +19,8 @@
 echo 
 echo "#### Boost ####"
 echo
-cd $EDA_SRC/org-boostorg-boost
-cp LICENSE_1_0.txt $ACT_HOME/license/LICENSE_org-boostorg-boost
+cd $EDA_SRC/org-debian-boost
+cp LICENSE_1_0.txt $ACT_HOME/license/LICENSE_org-debian-boost
 # currently building without MPI (MPICH)
 echo "using mpi ;" >> user-config.jam
 # build a static b2: bootstrap's b2 gets no rpath, so a shared libstdc++ isn't
