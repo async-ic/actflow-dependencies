@@ -15,7 +15,10 @@
 #   old to parse the shipped gcc16 libstdc++, its matched libc++-14 compiles fine.
 #   cxx-headers is a runtimes sub-component, not a runtime_name (cxx/cxxabi/unwind
 #   auto-get top-level targets), so it must go in LLVM_RUNTIME_DISTRIBUTION_COMPONENTS
-#   to get a forwarding target; else `make distribution` errors "doesn't have a target".
+#   for an install-cxx-headers forwarding target; else install-distribution omits the
+#   headers. Build via `make install-distribution` ONLY, never `make distribution`: the
+#   latter depends on the raw `cxx-headers` target, an INTERFACE lib with no make rule
+#   ("No rule to make target 'cxx-headers'"). install-<comp> builds its deps first.
 # - Version ceiling: fluid builds unmodified only up to LLVM 14 (14.0.6 OK;
 #   12/11 OK; 13 is a hole: ConstantAggregateZero::getNumElements). 15+ break on
 #   the new llvm::json vs nlohmann json clash (`using namespace llvm`), plus @16
@@ -64,8 +67,6 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D LLVM_RUNTIME_DISTRIBUTION_COMPONENTS="cxx-headers" \
   -G "Unix Makefiles" \
   ../llvm
-  make -j4 distribution || exit 1
-cd $EDA_SRC/org-llvm-llvm-project/build || exit 1
-make install-distribution || exit 1
+  make -j4 install-distribution || exit 1
 unset LD_LIBRARY_PATH
 
