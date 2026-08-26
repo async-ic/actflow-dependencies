@@ -33,6 +33,12 @@
 #   $ACT_HOME/llvm/bin to PATH. rpath fixed by packaging/004-build_testing.sh's ELF pass.
 # - gcc16: LLVM 14 headers miss <cstdint> (uintNN_t) => -include cstdint.
 # - make || exit 1: trailing `unset` (exit 0) else masks failure, ships llvm-less pkg.
+# - compiler-rt (builtins+crt) is built standalone after install-distribution so the
+#   bundled clang is self-contained: it links clang_rt.crtbegin/crtend + libclang_rt.
+#   builtins instead of gcc crtbegin.o/-lgcc, and libunwind instead of libgcc_s. The
+#   fluid test targets (Ubuntu/Debian/Fedora) install libc + binutils but NO gcc, so a
+#   gcc fallback fails "cannot find crtbegin.o / -lgcc". Installed into clang's resource
+#   dir (lib/linux) where clang finds it via --rtlib=compiler-rt.
 
 echo "#############################"
 echo "#build llvm"
@@ -68,5 +74,39 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -G "Unix Makefiles" \
   ../llvm
   make -j4 install-distribution || exit 1
+
+  # compiler-rt builtins+crt, built by the just-installed clang, into its resource dir.
+  # Only builtins+crt (no sanitizers/profile/etc); COMPILER_*_WORKS bypass the C++/link
+  # probes (clang-14 can't link the gcc16 libstdc++ default, and builtins/crt are C/asm
+  # objects only, never linked here). RESDIR = <prefix>/lib/clang/<ver>.
+  CLANG_RT=$ACT_HOME/llvm/bin/clang
+  RESDIR=$("$CLANG_RT" -print-resource-dir)
+  mkdir -p $EDA_SRC/org-llvm-llvm-project/build-compiler-rt
+  cd $EDA_SRC/org-llvm-llvm-project/build-compiler-rt || exit 1
+  cmake \
+  -D CMAKE_C_COMPILER="$CLANG_RT" \
+  -D CMAKE_CXX_COMPILER="$ACT_HOME/llvm/bin/clang++" \
+  -D CMAKE_ASM_COMPILER="$CLANG_RT" \
+  -D CMAKE_C_COMPILER_WORKS=1 \
+  -D CMAKE_CXX_COMPILER_WORKS=1 \
+  -D CMAKE_ASM_COMPILER_WORKS=1 \
+  -D CMAKE_C_COMPILER_TARGET=$("$CLANG_RT" -print-target-triple) \
+  -D CMAKE_BUILD_TYPE=Release \
+  -D LLVM_CONFIG_PATH=$ACT_HOME/llvm/bin/llvm-config \
+  -D COMPILER_RT_DEFAULT_TARGET_ONLY=ON \
+  -D COMPILER_RT_BUILD_BUILTINS=ON \
+  -D COMPILER_RT_BUILD_CRT=ON \
+  -D COMPILER_RT_BUILD_SANITIZERS=OFF \
+  -D COMPILER_RT_BUILD_XRAY=OFF \
+  -D COMPILER_RT_BUILD_LIBFUZZER=OFF \
+  -D COMPILER_RT_BUILD_PROFILE=OFF \
+  -D COMPILER_RT_BUILD_MEMPROF=OFF \
+  -D COMPILER_RT_BUILD_ORC=OFF \
+  -D COMPILER_RT_INCLUDE_TESTS=OFF \
+  -D CMAKE_INSTALL_PREFIX="$RESDIR" \
+  -G "Unix Makefiles" \
+  ../compiler-rt
+  make -j4 builtins crt || exit 1
+  make install-builtins install-crt || exit 1
 unset LD_LIBRARY_PATH
 

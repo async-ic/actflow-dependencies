@@ -11,6 +11,7 @@
 set -u
 KEEP_RECENT=3
 THIN_SECONDS=$((60 * 86400))
+INCOMPLETE_SECONDS=$((2 * 86400))          # grace for a source-only build to finish
 KEEP_VERSION="${1:-}"                       # version just published, never deleted
 API="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}"
 PKG_NAME="actflow-dependencies"
@@ -37,6 +38,21 @@ versions=$(
     page=$((page + 1))
   done | grep -E ' [0-9]{4}-[0-9]{2}-[0-9]{2}_' | sort -r
 )
+
+# drop incomplete packages: a build only becomes complete once a binary
+# (actflow_dependencies_package_*) file is uploaded, so a version carrying just the
+# source bundle is an abandoned/failed build. Deleted once past INCOMPLETE_SECONDS
+# so in-flight pipelines are never touched.
+now=$(date +%s)
+printf '%s\n' "$versions" | while read -r created id version; do
+  [ -n "$version" ] || continue
+  [ "$version" = "$KEEP_VERSION" ] && continue
+  [ $((now - $(date -d "$created" +%s))) -lt "$INCOMPLETE_SECONDS" ] && continue
+  files=$(curl -sf --header "$HDR" "$API/packages/$id/package_files?per_page=100") || continue
+  printf '%s' "$files" | jq -e 'any(.[]; .file_name | startswith("actflow_dependencies_package_"))' >/dev/null 2>&1 && continue
+  echo "deleting incomplete (source-only) package: $version (id $id, $created)"
+  curl -sf --request DELETE --header "$HDR" "$API/packages/$id" >/dev/null || echo "  warn: package $id delete failed"
+done
 
 # keep the KEEP_RECENT newest, plus the oldest version in each fixed THIN_SECONDS
 # window.
