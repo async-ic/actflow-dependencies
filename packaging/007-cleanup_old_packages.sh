@@ -24,6 +24,17 @@ if ! command -v jq >/dev/null || ! date -d "2000-01-01T00:00:00Z" +%s >/dev/null
 fi
 HDR="PRIVATE-TOKEN: ${CLEANUP_API_TOKEN}"
 
+# DELETE reporting the HTTP status+body on failure; -f hides why a delete is refused
+# (403 = token lacks 'api' scope or Maintainer role, 404 = wrong id/endpoint).
+DEL_BODY=$(mktemp)
+trap 'rm -f "$DEL_BODY"' EXIT
+api_delete() {
+  code=$(curl -s -o "$DEL_BODY" -w '%{http_code}' --request DELETE --header "$HDR" "$1")
+  case "$code" in 2*) return 0 ;; esac
+  echo "  warn: DELETE $1 -> HTTP $code: $(cat "$DEL_BODY")"
+  return 1
+}
+
 # dated (YYYY-MM-DD_hash) versions only, newest first, as "created_at id version"
 # lines; the grep drops tagged releases so retention never deletes them
 versions=$(
@@ -51,7 +62,7 @@ printf '%s\n' "$versions" | while read -r created id version; do
   files=$(curl -sf --header "$HDR" "$API/packages/$id/package_files?per_page=100") || continue
   printf '%s' "$files" | jq -e 'any(.[]; .file_name | startswith("actflow_dependencies_package_"))' >/dev/null 2>&1 && continue
   echo "deleting incomplete (source-only) package: $version (id $id, $created)"
-  curl -sf --request DELETE --header "$HDR" "$API/packages/$id" >/dev/null || echo "  warn: package $id delete failed"
+  api_delete "$API/packages/$id"
 done
 
 # keep the KEEP_RECENT newest, plus the oldest version in each fixed THIN_SECONDS
@@ -66,7 +77,7 @@ while read -r created id version; do
   bucket=$((ts / THIN_SECONDS))
   if [ "$bucket" != "$last_bucket" ]; then last_bucket=$bucket; continue; fi
   echo "deleting old version: $version (id $id, $created)"
-  curl -sf --request DELETE --header "$HDR" "$API/packages/$id" >/dev/null || echo "  warn: package $id delete failed"
+  api_delete "$API/packages/$id"
   curl -sf --request DELETE --header "$HDR" "$API/releases/$version" >/dev/null 2>&1 || true
   curl -sf --request DELETE --header "$HDR" "$API/repository/tags/$version" >/dev/null 2>&1 || true
 done <<EOF

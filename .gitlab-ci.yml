@@ -103,33 +103,25 @@ build:x86-64-v2:
     ARCH_LEVEL: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
 
-# x86-64-v3 / v4 disabled: no v3/v4 CI runners available yet. re-enable these
-# build+test jobs and the release needs/upload/assets-link below once runners exist.
-#build:x86-64-v3:
-#  <<: *build_alma9
-#  stage: build
-#  needs: ["prepare:sources"]
-#  allow_failure: true
-#  variables:
-#    ARCH_LEVEL: x86-64-v3
-#    GIT_STRATEGY: none
-#  artifacts:
-#    paths:
-#      - actflow_dependencies_package_*.tar.gz
-#    expire_in: 1 week
-#
-#build:x86-64-v4:
-#  <<: *build_alma9
-#  stage: build
-#  needs: ["prepare:sources"]
-#  allow_failure: true
-#  variables:
-#    ARCH_LEVEL: x86-64-v4
-#    GIT_STRATEGY: none
-#  artifacts:
-#    paths:
-#      - actflow_dependencies_package_*.tar.gz
-#    expire_in: 1 week
+# v3/v4 run on dedicated runners; the arch tag pins the CPU baseline that
+# 000-check_arch_level.sh verifies, "container" selects the docker executor.
+build:x86-64-v3:
+  <<: *build_alma9
+  stage: build
+  needs: ["prepare:sources"]
+  tags: [x86-64-v3, container]
+  variables:
+    ARCH_LEVEL: x86-64-v3
+    GIT_SUBMODULE_STRATEGY: none
+
+build:x86-64-v4:
+  <<: *build_alma9
+  stage: build
+  needs: ["prepare:sources"]
+  tags: [x86-64-v4, container]
+  variables:
+    ARCH_LEVEL: x86-64-v4
+    GIT_SUBMODULE_STRATEGY: none
 
 # distro portability matrix: each packaged variant tested against target OSes
 .test_script: &test_script
@@ -170,98 +162,93 @@ test:x86-64-v2:
       - DISTRO_IMAGE: fedora:25               # kernel 4.8 (oldest whose TLS stack can still reach the registry)
   image: $DISTRO_IMAGE
 
-#test:x86-64-v3:
-#  <<: *test_script
-#  stage: test
-#  needs: ["prepare:sources", "build:x86-64-v3"]
-#  rules:
-#    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
-#      allow_failure: true
-#    - when: on_success
-#  variables:
-#    ARCH_LEVEL: x86-64-v3
-#  parallel:
-#    matrix:
-#      - DISTRO_IMAGE:
-#          - almalinux:9           # kernel 5.14
-#          - almalinux:10          # kernel 6.12
-#          - debian:stable          # trixie, kernel 6.12
-#          - debian:oldstable       # bookworm, kernel 6.1
-#          - ubuntu:22.04           # kernel 5.15
-#          - ubuntu:24.04           # kernel 6.8
-#          - ubuntu:26.04           # kernel 6.14
-#          - opensuse/leap:15       # 15.6, kernel 6.4
-#          - archlinux/archlinux:latest # rolling
-#          - fedora:latest          # rolling
-#  image: $DISTRO_IMAGE
-#
-#test:x86-64-v4:
-#  <<: *test_script
-#  stage: test
-#  needs: ["prepare:sources", "build:x86-64-v4"]
-#  rules:
-#    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
-#      allow_failure: true
-#    - when: on_success
-#  variables:
-#    ARCH_LEVEL: x86-64-v4
-#  parallel:
-#    matrix:
-#      - DISTRO_IMAGE:
-#          - almalinux:9           # kernel 5.14
-#          - almalinux:10          # kernel 6.12
-#          - debian:stable          # trixie, kernel 6.12
-#          - debian:oldstable       # bookworm, kernel 6.1
-#          - ubuntu:22.04           # kernel 5.15
-#          - ubuntu:24.04           # kernel 6.8
-#          - ubuntu:26.04           # kernel 6.14
-#          - opensuse/leap:15       # 15.6, kernel 6.4
-#          - archlinux/archlinux:latest # rolling
-#          - fedora:latest          # rolling
-#  image: $DISTRO_IMAGE
+# distro matrix for the ABI 5.14 builds, shared by v3/v4 (only ARCH_LEVEL/tags differ)
+.test_matrix_x86_abi_514: &test_matrix_x86_abi_514
+  matrix:
+    - DISTRO_IMAGE: almalinux:9             # kernel 5.14
+    - DISTRO_IMAGE: almalinux:10            # kernel 6.12
+    - DISTRO_IMAGE: debian:stable           # trixie, kernel 6.12
+      TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+    - DISTRO_IMAGE: debian:oldstable        # bookworm, kernel 6.1
+      TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+    - DISTRO_IMAGE: ubuntu:22.04            # kernel 5.15
+      TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+    - DISTRO_IMAGE: ubuntu:24.04            # kernel 6.8
+      TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+    - DISTRO_IMAGE: ubuntu:26.04            # kernel 6.14
+      TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+    - DISTRO_IMAGE: opensuse/leap:15        # 15.6, kernel 6.4
+    - DISTRO_IMAGE: archlinux/archlinux:latest # rolling
+    - DISTRO_IMAGE: fedora:latest           # rolling
 
-# uses script: not the declarative release: keyword - that only does $VAR substitution, can't run head/rename commands below
-release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+test:x86-64-v3:
+  <<: *test_script
+  stage: test
+  needs: ["prepare:sources", "build:x86-64-v3"]
+  tags: [x86-64-v3, container]
+  rules:
+    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+      allow_failure: true
+    - when: on_success
   variables:
+    ARCH_LEVEL: x86-64-v3
     GIT_SUBMODULE_STRATEGY: none
+    TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
+  parallel: *test_matrix_x86_abi_514
+  image: $DISTRO_IMAGE
+
+test:x86-64-v4:
+  <<: *test_script
+  stage: test
+  needs: ["prepare:sources", "build:x86-64-v4"]
+  tags: [x86-64-v4, container]
+  rules:
+    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+      allow_failure: true
+    - when: on_success
+  variables:
+    ARCH_LEVEL: x86-64-v4
+    GIT_SUBMODULE_STRATEGY: none
+    TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
+  parallel: *test_matrix_x86_abi_514
+  image: $DISTRO_IMAGE
+
+# one release job per arch, each only linking its own packages, so a delayed or failed
+# arch still leaves the others released. 
+.release: &release
+  stage: release
+  image: buildpack-deps:stable-scm # curl; jq added below
+  resource_group: release
   rules:
     - if: '$CI_COMMIT_TAG'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-  needs:
-    - prepare:sources
-    - build:x86-64-v2
-#    - build:x86-64-v3
-#    - build:x86-64-v4
-    - test:x86-64-v2
-#    - test:x86-64-v3
-#    - test:x86-64-v4
+  before_script:
+    - apt-get -q update -y >/dev/null && apt-get -q install -y jq >/dev/null
   script:
-    - |
-      # version was minted once in prepare and carried here via dotenv; a tag pipeline
-      # publishes under the tag (kept forever), else it is YYYY-MM-DD_hash, which the
-      # cleanup:packages sweep thins. also the release git tag. the sources + binaries
-      # are already in the registry (uploaded by prepare + build), so only link them.
-      RELEASE_VERSION="${ACTFLOW_DEP_VERSION}"
-      PACKAGE_BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${RELEASE_VERSION}"
+    - sh packaging/008-release.sh "${ACTFLOW_DEP_VERSION}" "${ARCH_LEVEL}"
 
-      RELEASE_TITLE="$(head -n 1 packaging/release_titel.md)"
-      RELEASE_DESCRIPTION="$(head -n 1 packaging/release_description.md)"
+release:x86-64-v2:
+  <<: *release
+  needs: ["prepare:sources", "build:x86-64-v2", "test:x86-64-v2"]
+  variables:
+    ARCH_LEVEL: x86-64-v2
+    GIT_SUBMODULE_STRATEGY: none
 
-      release-cli create \
-        --tag-name "${RELEASE_VERSION}" \
-        --name "${RELEASE_TITLE}" \
-        --description "${RELEASE_DESCRIPTION}" \
-        --assets-link "{\"name\":\"actflow_dependencies_sources.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_sources.tar.gz\"}" \
-        --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v2.tar.gz\"}" \
-        --assets-link "{\"name\":\"actflow_dependencies_testing_package_x86-64-v2.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_testing_package_x86-64-v2.tar.gz\"}"
-        # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v3.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v3.tar.gz\"}" \
-        # --assets-link "{\"name\":\"actflow_dependencies_package_x86-64-v4.tar.gz\",\"url\":\"${PACKAGE_BASE_URL}/actflow_dependencies_package_x86-64-v4.tar.gz\"}"
+release:x86-64-v3:
+  <<: *release
+  needs: ["prepare:sources", "build:x86-64-v3", "test:x86-64-v3"]
+  variables:
+    ARCH_LEVEL: x86-64-v3
+    GIT_SUBMODULE_STRATEGY: none
 
-# Retention sweep: own job gated on a successful release (needs:). A failed or skipped
-# release leaves it unrun, so the next green pipeline cleans up rather than deleting
-# against a half-published state. Version (kept version) via the prepare dotenv.
+release:x86-64-v4:
+  <<: *release
+  needs: ["prepare:sources", "build:x86-64-v4", "test:x86-64-v4"]
+  variables:
+    ARCH_LEVEL: x86-64-v4
+    GIT_SUBMODULE_STRATEGY: none
+
+# Retention sweep: one job for all arches, gated on a successful release
 cleanup:packages:
   stage: clean
   image: buildpack-deps:stable-scm # git+curl; jq + GNU date added below
@@ -271,7 +258,9 @@ cleanup:packages:
     - if: '$CI_COMMIT_TAG'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   needs:
-    - release
+    - release:x86-64-v2
+    - release:x86-64-v3
+    - release:x86-64-v4
   before_script:
     - apt-get -q update -y >/dev/null && apt-get -q install -y jq >/dev/null
   script:

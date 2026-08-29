@@ -27,7 +27,8 @@ if [ -d "../packaging" ]; then echo "please exec from repository root (one folde
 # single version string shared by every pipeline job. A tag publishes
 # under the tag, else YYYY-MM-DD_hash.
 VERSION="${CI_COMMIT_TAG:-}"
-[ -n "$VERSION" ] || VERSION="$(date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
+# date from the commit, not job runtime, so reruns/day-rollover never drift the version
+[ -n "$VERSION" ] || VERSION="$(git show -s --format=%cd --date=short HEAD 2>/dev/null || date '+%Y-%m-%d')_${CI_COMMIT_SHORT_SHA:-local}"
 # line 1 is the release version (all readers take only the first line); the remaining
 # lines are a "<path> <tag | shorthash (branch) | shorthash>" component manifest.
 echo "$VERSION" > actflow_dep.version
