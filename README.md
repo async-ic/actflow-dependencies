@@ -14,25 +14,27 @@ that only depend on libc and work with any linux/gnu OS with kernel version newe
 
 the builds are tested to work with prestine versions (no extra packages installed) of 
 **x86-64-v2:**
-- centos:7.2+ # kernel 3.10
+the oldest release of each distro, proving the compatibility floor, plus the newer ones
+that still get security updates
+- centos:7.2+ # kernel 3.10, oldest RHEL
 - RHEL 8 (or derivats RockyLinux, AlmaLinux, ...) # kernel 4.18
-- RHEL 9 (or derivats RockyLinux, AlmaLinux, ...) # kernel 5.14
-- RHEL 10 (or derivats RockyLinux, AlmaLinux, ...) # kernel 6.12
-- Debian oldoldstable # bullseye, kernel 5.10
-- Ubuntu LTS 20.04  # kernel 5.4
-- Ubuntu LTS 18.04  # kernel 4.15
-- Ubuntu LTS 16.04  # kernel 4.4
-- Fedora 20 # kernel 3.11
+- opensuse leap 15 # 15.6, kernel 6.4
+- Ubuntu LTS 16.04 # kernel 4.4, oldest ubuntu
+- Ubuntu LTS 22.04 # kernel 5.15
+- Debian 11 # bullseye, kernel 5.10, oldest debian
+- Debian 12 # bookworm, kernel 6.1
+- Fedora 25 # kernel 4.8
 
 **x86-64-v3 and x86-64-v4:**
+only releases still in their normal support cycle, once one drops to LTS/ESM or goes EOL
+it is only covered by the v2 list above
 - RHEL 9 (or derivats RockyLinux, AlmaLinux, ...) # kernel 5.14
 - RHEL 10 (or derivats RockyLinux, AlmaLinux, ...) # kernel 6.12
-- debian stable    # trixie, kernel 6.12
-- debian oldstable # bookworm, kernel 6.1
-- ubuntu LTS 22.04 # kernel 5.15
+- debian stable  # trixie, kernel 6.12
+- debian testing # rolling
 - ubuntu LTS 24.04 # kernel 6.8
 - ubuntu LTS 26.04 # kernel 6.14
-- opensuse leap 15  # 15.6, kernel 6.4
+- opensuse leap 16 # 16.0, kernel 6.12
 - archlinux latest # rolling
 - fedora latest # rolling
 

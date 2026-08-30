@@ -148,39 +148,40 @@ test:x86-64-v2:
     ARCH_LEVEL: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
     TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
+  # the oldest release of each distro, proving the compatibility floor, plus the newer
+  # ones that still get security updates.
   parallel:
     matrix:
       - DISTRO_IMAGE: centos:7.2.1511         # kernel 3.10
         TEST_DEPS_INSTALL_CMD: "sed -i 's/^mirrorlist=/#mirrorlist=/g; s|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo && yum install -y ca-certificates"
       - DISTRO_IMAGE: rockylinux/rockylinux:8 # kernel 4.18
-      - DISTRO_IMAGE: almalinux:9             # kernel 5.14
-      - DISTRO_IMAGE: debian:oldoldstable     # bullseye, kernel 5.10
+      - DISTRO_IMAGE: opensuse/leap:15        # 15.6, kernel 6.4
+      - DISTRO_IMAGE: ubuntu:16.04            # kernel 4.4, oldest ubuntu
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-      - DISTRO_IMAGE: ubuntu:20.04            # kernel 5.4
+      - DISTRO_IMAGE: ubuntu:22.04            # kernel 5.15, LTS standard support to 2027-04
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-      - DISTRO_IMAGE: ubuntu:18.04            # kernel 4.15
+      - DISTRO_IMAGE: debian:bullseye         # 11, kernel 5.10, oldest debian
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-      - DISTRO_IMAGE: ubuntu:16.04            # kernel 4.4
+      - DISTRO_IMAGE: debian:bookworm         # 12, kernel 6.1, LTS team since 2026-07-11
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
       - DISTRO_IMAGE: fedora:25               # kernel 4.8 (oldest whose TLS stack can still reach the registry)
   image: $DISTRO_IMAGE
 
-# distro matrix for the ABI 5.14 builds, shared by v3/v4 (only ARCH_LEVEL/tags differ)
+# distro matrix for the ABI 5.14 builds, shared by v3/v4 (only ARCH_LEVEL/tags differ).
+# only releases still in their normal support cycle
 .test_matrix_x86_abi_514: &test_matrix_x86_abi_514
   matrix:
     - DISTRO_IMAGE: almalinux:9             # kernel 5.14
     - DISTRO_IMAGE: almalinux:10            # kernel 6.12
     - DISTRO_IMAGE: debian:stable           # trixie, kernel 6.12
       TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-    - DISTRO_IMAGE: debian:oldstable        # bookworm, kernel 6.1
-      TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-    - DISTRO_IMAGE: ubuntu:22.04            # kernel 5.15
+    - DISTRO_IMAGE: debian:testing          # rolling
       TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
     - DISTRO_IMAGE: ubuntu:24.04            # kernel 6.8
       TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
     - DISTRO_IMAGE: ubuntu:26.04            # kernel 6.14
       TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-    - DISTRO_IMAGE: opensuse/leap:15        # 15.6, kernel 6.4
+    - DISTRO_IMAGE: opensuse/leap:16        # 16.0, kernel 6.12
     - DISTRO_IMAGE: archlinux/archlinux:latest # rolling
     - DISTRO_IMAGE: fedora:latest           # rolling
 
@@ -190,7 +191,7 @@ test:x86-64-v3:
   needs: ["prepare:sources", "build:x86-64-v3"]
   tags: [x86-64-v3, container]
   rules:
-    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+    - if: '$DISTRO_IMAGE =~ /^archlinux\/|^debian:testing$/'
       allow_failure: true
     - when: on_success
   variables:
@@ -206,7 +207,7 @@ test:x86-64-v4:
   needs: ["prepare:sources", "build:x86-64-v4"]
   tags: [x86-64-v4, container]
   rules:
-    - if: '$DISTRO_IMAGE =~ /^archlinux\//'
+    - if: '$DISTRO_IMAGE =~ /^archlinux\/|^debian:testing$/'
       allow_failure: true
     - when: on_success
   variables:
