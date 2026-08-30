@@ -18,7 +18,8 @@
 #   for an install-cxx-headers forwarding target; else install-distribution omits the
 #   headers. Build via `make install-distribution` ONLY, never `make distribution`: the
 #   latter depends on the raw `cxx-headers` target, an INTERFACE lib with no make rule
-#   ("No rule to make target 'cxx-headers'"). install-<comp> builds its deps first.
+#   ("No rule to make target 'cxx-headers'"). install-<comp> builds its deps first, but
+#   the runtime install-* targets race under -j (see `make runtimes` below).
 # - Version ceiling: fluid builds unmodified only up to LLVM 14 (14.0.6 OK;
 #   12/11 OK; 13 is a hole: ConstantAggregateZero::getNumElements). 15+ break on
 #   the new llvm::json vs nlohmann json clash (`using namespace llvm`), plus @16
@@ -73,6 +74,9 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D LLVM_RUNTIME_DISTRIBUTION_COMPONENTS="cxx-headers" \
   -G "Unix Makefiles" \
   ../llvm
+  # runtimes in ONE sub-make first, then install so -j4 runs
+  # up to 4 makes -> race condition.
+  make -j4 runtimes || exit 1
   make -j4 install-distribution || exit 1
 
   # compiler-rt builtins+crt, built by the just-installed clang, into its resource dir.

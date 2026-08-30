@@ -38,6 +38,7 @@ prepare:sources:
   stage: prepare
   image: almalinux:9
   needs: []
+  tags: [container]
   script:
     - yum install git bzip2 -y
     - bash packaging/001-pack_sources.sh
@@ -95,16 +96,17 @@ prepare:sources:
       - logs/
     expire_in: 1 week
 
+# runner tags: build+test carry the arch tag pinning the CPU baseline that
+# 000-check_arch_level.sh verifies, every job carries "container" (docker executor).
 build:x86-64-v2:
   <<: *build_centos7
   stage: build
   needs: ["prepare:sources"]
+  tags: [x86-64-v2, container]
   variables:
     ARCH_LEVEL: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
 
-# v3/v4 run on dedicated runners; the arch tag pins the CPU baseline that
-# 000-check_arch_level.sh verifies, "container" selects the docker executor.
 build:x86-64-v3:
   <<: *build_alma9
   stage: build
@@ -141,6 +143,7 @@ test:x86-64-v2:
   <<: *test_script
   stage: test
   needs: ["prepare:sources", "build:x86-64-v2"]
+  tags: [x86-64-v2, container]
   variables:
     ARCH_LEVEL: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
@@ -218,6 +221,7 @@ test:x86-64-v4:
 .release: &release
   stage: release
   image: buildpack-deps:stable-scm # curl; jq added below
+  tags: [container]
   resource_group: release
   rules:
     - if: '$CI_COMMIT_TAG'
@@ -252,6 +256,7 @@ release:x86-64-v4:
 cleanup:packages:
   stage: clean
   image: buildpack-deps:stable-scm # git+curl; jq + GNU date added below
+  tags: [container]
   variables:
     GIT_SUBMODULE_STRATEGY: none
   rules:
