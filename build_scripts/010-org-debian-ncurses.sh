@@ -24,10 +24,16 @@ cd $EDA_SRC/org-debian-ncurses
 # libs libncursesw/libtinfow; classic consumers (libedit, readline) look for -lncurses/
 # -ltinfo and fail. non-wide restores those names (the pre-6.6 ABI-5 default behaviour).
 # --enable-root-environ: honour $TERMINFO as root (nothing setuid here) - a secondary
-# path for terminals outside the compiled-in fallback set below.
+# path for terminals outside the compiled-in fallback set below. it needs
+# cf_cv_multiuser=yes: the probe reads /etc/passwd, and in a CI image without a regular
+# user it silently drops the whole root/setuid option block, restricting root instead.
+# --with-terminfo-dirs: the compiled-in DB dir is the build $prefix and dies on
+# relocation; the host DB covers the terminals outside the fallback set (xterm*).
 common_cfg=(
   --disable-widec
   --enable-root-environ
+  cf_cv_multiuser=yes
+  --with-terminfo-dirs=/etc/terminfo:/lib/terminfo:/usr/share/terminfo:/usr/lib/terminfo:/usr/local/share/terminfo
   --with-cxx-binding
   --with-cxx-shared
   --with-xterm-kbs=del
@@ -43,10 +49,10 @@ common_cfg=(
 )
 
 # Two-pass build for compiled-in terminfo fallbacks:
-# the compiled DB dir is baked to the build $prefix (dead after relocation) and ncurses
-# ignores $TERMINFO when euid==0, so as root (the CI) libedit/readline-linked tools warn
-# "Cannot read termcap database". --with-fallbacks compiles the common terminals into
-# libtinfo so they resolve with no DB and no env - robust against relocation and root.
+# the compiled DB dir is baked to the build $prefix (dead after relocation), so without
+# them libedit/readline-linked tools warn "Cannot read termcap database" on any host
+# lacking a DB. --with-fallbacks compiles the common terminals into libtinfo so they
+# resolve with no DB and no env - robust against relocation and root.
 # Its generator (MKfallback.sh) needs a version-matched tic/infocmp to compile 6.6's
 # terminfo.src (host tic 5.9 is too old); pass 1 installs them, pass 2 uses them.
 ./configure "${common_cfg[@]}" || exit 1

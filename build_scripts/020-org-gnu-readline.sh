@@ -20,6 +20,8 @@ echo "#############################"
 echo "# libreadline"
 cd $EDA_SRC/org-gnu-readline
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-readline
-./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
+# --with-shared-termcap-library: readline otherwise leaves UP/BC/PC/tgetent undefined in
+# libreadline.so; pinned to -ltinfo, the termlib from 010-ncurses.
+./configure --prefix=$ACT_HOME --with-shared-termcap-library=-ltinfo CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make -j || exit 1
 make install || exit 1

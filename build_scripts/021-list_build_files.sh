@@ -17,11 +17,12 @@
 
 # snapshot of $ACT_HOME before tcl: everything installed so far (cmake, gcc,
 # ncurses, zlib, libedit, readline) is build-only, so this records all files
-# except shared objects (*.so, *.so.*) and license files.
+# except shared objects (*.so, *.so.*), the ncurses terminfo DB (runtime, as in 070)
+# and license files.
 
 echo "#############################"
-echo "# list build-only files ($ACT_HOME so far, except *.so and license)"
+echo "# list build-only files ($ACT_HOME so far, except *.so, terminfo and license)"
 
 cd $ACT_HOME
-find . -type f ! -name "*.so" ! -name "*.so.*" ! -path "./license/*" ! -name "LICENSE.txt" \
+find . -type f ! -name "*.so" ! -name "*.so.*" ! -path "./share/terminfo/*" ! -path "./license/*" ! -name "LICENSE.txt" \
 	| sed 's|^\./||' | sort > build_only_files.list
