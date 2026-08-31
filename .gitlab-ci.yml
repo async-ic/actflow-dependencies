@@ -129,7 +129,8 @@ build:x86-64-v4:
 .test_script: &test_script
   # superproject-only checkout gives the test scripts
   before_script:
-    # per-image TEST_DEPS_INSTALL_CMD (set in the matrix) provides a modern-TLS curl/wget
+    # per-image TEST_DEPS_INSTALL_CMD (set in the matrix) provides the download and
+    # unpack tools the image lacks: a modern-TLS curl/wget, tar and gzip
     - eval "$TEST_DEPS_INSTALL_CMD"
     - bash packaging/gitlab-registry-transfer.sh down "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
   script:
@@ -156,6 +157,7 @@ test:x86-64-v2:
         TEST_DEPS_INSTALL_CMD: "sed -i 's/^mirrorlist=/#mirrorlist=/g; s|^#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo && yum install -y ca-certificates"
       - DISTRO_IMAGE: rockylinux/rockylinux:8 # kernel 4.18
       - DISTRO_IMAGE: opensuse/leap:15        # 15.6, kernel 6.4
+        TEST_DEPS_INSTALL_CMD: "zypper --non-interactive install tar gzip"
       - DISTRO_IMAGE: ubuntu:16.04            # kernel 4.4, oldest ubuntu
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
       - DISTRO_IMAGE: ubuntu:22.04            # kernel 5.15, LTS standard support to 2027-04
