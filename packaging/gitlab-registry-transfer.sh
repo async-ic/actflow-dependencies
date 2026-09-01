@@ -16,6 +16,21 @@ VERSION="${ACTFLOW_DEP_VERSION:-}"
 [ -n "$VERSION" ] || { echo "registry: no version (ACTFLOW_DEP_VERSION unset and actflow_dep.version missing)" >&2; exit 1; }
 BASE_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/actflow-dependencies/${VERSION}"
 
+RETRY_WAIT="${ACTFLOW_REGISTRY_RETRY_WAIT:-10}"
+
+# runs the transfer up to 3 times; the registry drops connections mid-transfer
+# (curl "HTTP/2 stream 0 was not closed cleanly: PROTOCOL_ERROR"), which curl
+# --retry does not cover as it is not a transient HTTP status
+retry() { # command...
+  attempt=1
+  until "$@"; do
+    [ "$attempt" -lt 3 ] || { echo "registry: failed after $attempt attempts" >&2; return 1; }
+    echo "registry: transfer failed, retrying in ${RETRY_WAIT}s" >&2
+    sleep "$RETRY_WAIT"
+    attempt=$((attempt + 1))
+  done
+}
+
 fetch() { # url outfile
   if command -v curl >/dev/null 2>&1; then
     curl --fail --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --output "$2" "$1"
@@ -24,14 +39,18 @@ fetch() { # url outfile
   fi
 }
 
+send() { # file url
+  curl --fail --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "$1" "$2"
+}
+
 case "${1:-}" in
   up)
-    curl --fail --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "$2" "${BASE_URL}/$3"
+    retry send "$2" "${BASE_URL}/$3"
     echo "uploaded $2 -> ${BASE_URL}/$3" ;;
   down)
     command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || \
       { echo "registry: need curl or wget (install it in the CI before_script)" >&2; exit 1; }
-    fetch "${BASE_URL}/$2" "$3"
+    retry fetch "${BASE_URL}/$2" "$3"
     echo "downloaded ${BASE_URL}/$2 -> $3" ;;
   *) echo "usage: $0 up <file> <name> | down <name> <file>" >&2; exit 1 ;;
 esac

@@ -24,6 +24,21 @@ echo
 
 if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
+RETRY_WAIT="${ACTFLOW_REGISTRY_RETRY_WAIT:-10}"
+
+# runs a download up to 3 times; upstream mirrors drop connections mid-transfer
+# (curl "HTTP/2 stream 0 was not closed cleanly: PROTOCOL_ERROR"), which curl
+# --retry does not cover as it is not a transient HTTP status
+retry() { # command...
+  attempt=1
+  until "$@"; do
+    [ "$attempt" -lt 3 ] || { echo "download failed after $attempt attempts" >&2; return 1; }
+    echo "download failed, retrying in ${RETRY_WAIT}s" >&2
+    sleep "$RETRY_WAIT"
+    attempt=$((attempt + 1))
+  done
+}
+
 # single version string shared by every pipeline job. A tag publishes
 # under the tag, else YYYY-MM-DD_hash.
 VERSION="${CI_COMMIT_TAG:-}"
@@ -54,7 +69,7 @@ fi
 # gmp/mpfr/mpc for gcc's in-tree build (statically linked into cc1plus): fetch into the
 # gcc srcdir now so they are captured in the source bundle (copyleft: the shipped compiler
 # links them) and the offline build stage needs no network. --no-isl: Graphite unused.
-( cd src/org-gnu-gcc && ./contrib/download_prerequisites --no-isl )
+( cd src/org-gnu-gcc && retry ./contrib/download_prerequisites --no-isl )
 
 # pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
 tar --exclude-vcs --exclude='./actflow_dependencies_sources_*.tar.gz' -cf - ./* | gzip -9 > "actflow_dependencies_sources_${VERSION}.tar.gz"
