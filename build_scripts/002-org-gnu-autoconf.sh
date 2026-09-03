@@ -16,7 +16,7 @@
 
 # deps: host automake>=1.11/perl/m4>=1.4.16 | used by: 003-automake, 006-bison
 
-# builds autoconf 2.72 into $ACT_HOME, precede 003-automake and 006-bison.
+# builds autoconf into $ACT_HOME, precede 003-automake and 006-bison.
 
 echo
 echo "#### autoconf ####"

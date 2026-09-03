@@ -9,7 +9,7 @@
 # Needs an api-scoped token in $CLEANUP_API_TOKEN.
 
 set -u
-KEEP_RECENT=3
+KEEP_RECENT=2
 THIN_SECONDS=$((60 * 86400))
 INCOMPLETE_SECONDS=$((2 * 86400))          # grace for a source-only build to finish
 KEEP_VERSION="${1:-}"                       # version just published, never deleted

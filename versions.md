@@ -13,3 +13,7 @@ release tag and may be updated freely.
 |---|---|---|
 | trilinos (060) | 16.2.1 | Xyce 7.10 does not build against Trilinos newer than 16.x. Bump only together with Xyce. |
 | llvm-project (038) | 14.0.6 | Newest LLVM that builds fluid unmodified. Coupled to fluid, not a general toolchain bump. |
+
+# repos without tagged releases
+
+metis / gklib / parmetis here we stay on the newest commit on the main branch (release branch)
