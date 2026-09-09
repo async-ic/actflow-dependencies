@@ -17,10 +17,11 @@
 # ARCH_LEVEL is the literal compiler -march value, checked per platform:
 #   x86-64-v2            Linux/x86_64 - /proc/cpuinfo flags (works on any glibc/kernel)
 #   x86-64-v3/v4          Linux/x86_64 - ld.so hwcaps tag (glibc >= 2.33, flag set is large/version-sensitive)
-#   armv8.5-a/8.7-a       Linux/aarch64 - ld.so hwcaps tags, macOS/arm64 - hw.optional.arm.FEAT_* sysctls.
-#                          Every mandatory feature of that baseline *that has a userspace-visible flag*
-#                          is checked; some (CSV2/CSV3/HCX/XS, ...) are EL-only/informational and can't
-#                          be probed from userspace, so they're left out.
+#   armv8.5-a/8.7-a       Linux/aarch64 - /proc/cpuinfo Features (AT_HWCAP+HWCAP2), macOS/arm64 -
+#                          hw.optional.arm.FEAT_* sysctls. Mandatory features are split into required
+#                          (fail) and advisory (warn only - gcc generates no code for them, and they
+#                          are maskable by a hypervisor or unnamed by kernels before 5.19).
+#                          EL-only features (CSV2/CSV3/HCX/XS, ...) aren't visible from userspace.
 
 set -u
 
@@ -71,9 +72,10 @@ find_ldso() {
 	esac
 }
 
-# on Linux glibc's dynamic linker knows its own supported glibc-hwcaps tags - x86-64-v2/v3/v4
-# tiers on x86_64, individual feature names (e.g. "ssbs") on aarch64 - so delegate to it instead
-# of hand-enumerating flags. Checks that every given tag is supported (AND); no args = nothing to check.
+# on Linux/x86_64 glibc's dynamic linker knows its own supported glibc-hwcaps tags
+# (x86-64-v2/v3/v4), so delegate to it instead of hand-enumerating flags. Checks that every
+# given tag is supported (AND); no args = nothing to check. x86_64 only: aarch64 defines no
+# glibc-hwcaps subdirs, and its legacy AT_HWCAP list omits HWCAP2 and is gone in glibc >= 2.37.
 check_linux_hwcaps() {
 	[ $# -eq 0 ] && return 0
 	local ldso help missing=""
@@ -86,15 +88,31 @@ check_linux_hwcaps() {
 	[ -n "$missing" ] && fail "runner does not support ${ARCH_LEVEL} (missing hwcaps:$missing)"
 }
 
+# reports an Arm feature scan: missing required features abort, missing advisory ones warn.
+report_features() {
+	[ -n "$2" ] && echo "warning: ${ARCH_LEVEL} features not reported by the runner:$2 - not compiler-emitted, continuing"
+	[ -n "$1" ] && fail "host CPU does not support ${ARCH_LEVEL} (missing features:$1)"
+	return 0
+}
+
+# Linux/aarch64: the kernel decodes AT_HWCAP and AT_HWCAP2 into /proc/cpuinfo "Features"
+# (names per arch/arm64/kernel/cpuinfo.c) - the complete userspace view, on any glibc.
+# $1 = required features, $2 = advisory ones.
+check_linux_features() {
+	local feats missing="" advisory=""
+	feats=" $(grep -m1 '^Features' /proc/cpuinfo | cut -d: -f2-) "
+	for feat in $1; do case "$feats" in *" $feat "*) ;; *) missing="$missing $feat" ;; esac; done
+	for feat in $2; do case "$feats" in *" $feat "*) ;; *) advisory="$advisory $feat" ;; esac; done
+	report_features "$missing" "$advisory"
+}
+
 # macOS exposes individual Arm feature bits as hw.optional.arm.FEAT_* sysctls (value "1" = present).
-# Checks that every given FEAT_* name is present (AND); no args = nothing to check.
-check_macos_hwcaps() {
-	[ $# -eq 0 ] && return 0
-	local missing=""
-	for feat in "$@"; do
-		[ "$(sysctl -n "hw.optional.arm.${feat}" 2>/dev/null)" = "1" ] || missing="$missing $feat"
-	done
-	[ -n "$missing" ] && fail "host CPU does not support ${ARCH_LEVEL} (missing:$missing)"
+# $1 = required features, $2 = advisory ones.
+check_macos_features() {
+	local missing="" advisory=""
+	for feat in $1; do [ "$(sysctl -n "hw.optional.arm.${feat}" 2>/dev/null)" = "1" ] || missing="$missing $feat"; done
+	for feat in $2; do [ "$(sysctl -n "hw.optional.arm.${feat}" 2>/dev/null)" = "1" ] || advisory="$advisory $feat"; done
+	report_features "$missing" "$advisory"
 }
 
 case "$ARCH_LEVEL" in
@@ -113,15 +131,16 @@ x86-64-v3 | x86-64-v4)
 	;;
 armv8.5-a)
 	case "$OS/$MACHINE" in
-	Linux/aarch64) check_linux_hwcaps dit flagm flagm2 frint sb ssbs ;;
-	Darwin/arm64) check_macos_hwcaps FEAT_DIT FEAT_FlagM FEAT_FlagM2 FEAT_FRINTTS FEAT_SB FEAT_SSBS ;;
+	Linux/aarch64) check_linux_features "flagm flagm2 frint" "dit sb ssbs" ;;
+	Darwin/arm64) check_macos_features "FEAT_FlagM FEAT_FlagM2 FEAT_FRINTTS" "FEAT_DIT FEAT_SB FEAT_SSBS" ;;
 	*) fail "ARCH_LEVEL=armv8.5-a requires Linux/aarch64 or macOS/arm64, running on $OS/$MACHINE" ;;
 	esac
 	;;
 armv8.7-a)
 	case "$OS/$MACHINE" in
-	Linux/aarch64) check_linux_hwcaps dit flagm flagm2 frint sb ssbs bf16 i8mm ecv wfxt afp ;;
-	Darwin/arm64) check_macos_hwcaps FEAT_DIT FEAT_FlagM FEAT_FlagM2 FEAT_FRINTTS FEAT_SB FEAT_SSBS FEAT_BF16 FEAT_I8MM FEAT_ECV FEAT_WFXT FEAT_AFP ;;
+	# ecv/afp/wfxt are advisory: the kernel only names them from 5.19 on
+	Linux/aarch64) check_linux_features "flagm flagm2 frint bf16 i8mm" "dit sb ssbs ecv wfxt afp" ;;
+	Darwin/arm64) check_macos_features "FEAT_FlagM FEAT_FlagM2 FEAT_FRINTTS FEAT_BF16 FEAT_I8MM" "FEAT_DIT FEAT_SB FEAT_SSBS FEAT_ECV FEAT_WFxT FEAT_AFP" ;;
 	*) fail "ARCH_LEVEL=armv8.7-a requires Linux/aarch64 or macOS/arm64, running on $OS/$MACHINE" ;;
 	esac
 	;;
