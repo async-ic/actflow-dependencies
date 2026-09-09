@@ -23,7 +23,8 @@ cp LICENSE $ACT_HOME/license/LICENSE_org-libffi-libffi
 ./autogen.sh || exit 1
 ./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 sed -i 's/\/..\/lib64//' Makefile
-cd x86*
+# libffi builds in a host-triple subdir (x86_64-*-linux-gnu, aarch64-*-linux-gnu)
+cd *-linux-gnu*
 sed -i 's/\/..\/lib64//' Makefile
 cd $EDA_SRC/org-libffi-libffi
 make -j || exit 1

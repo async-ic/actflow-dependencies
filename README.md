@@ -1,12 +1,13 @@
 # actflow-dependencies
 all dependencies required by actflow https://github.com/asyncvlsi/actflow
 
-Built with MPI enabled from the **main** branch, in 3 portable variants
+Built with MPI enabled from the **main** branch, in 4 portable variants
 that only depend on libc and work with any linux/gnu OS with kernel version newer than:
 
 - **x86-64-v2** kernel version 3.10 or higher 
 - **x86-64-v3** kernel version 5.14 or higher
 - **x86-64-v4** kernel version 5.14 or higher
+- **armv8.5-a** (aarch64) kernel version 5.14 or higher
 
 [![pipeline status](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/badges/main/pipeline.svg)](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/-/pipelines)
 
@@ -38,21 +39,28 @@ it is only covered by the v2 list above
 - archlinux latest # rolling
 - fedora latest # rolling
 
+**armv8.5-a:**
+tested on the mirrored arm64 tart VM images only, glibc 2.34 (rocky 9) is the floor
+- RHEL 9 (or derivats RockyLinux, AlmaLinux, ...) # kernel 5.14
+- debian 12 / 13 # bookworm, trixie
+- ubuntu LTS 22.04 / 24.04
+- fedora 38 / 39 / 42
+
 # How to Package and build
 
 ## requirements:
 if you build on an older OS your package is compatible with more target platforms, thats why the v2 variant builds on centos7.2
 
 you need gcc 11+, m4, make, autoconf, automake, bison, flex, libtool, python3, csh, patch, texinfo
-(see `packaging/centos7_install_build_system.sh` for centos7/v2, `packaging/alma9_install_build_system.sh` for alma9/v3+v4)
+(see `packaging/el7_install_build_system.sh` for centos7/v2, `packaging/el9_install_build_system.sh` for alma9/v3+v4 and rocky9/armv8.5-a)
 
 ## environment variables
 
 `$ACT_HOME` is pointing to the install path
 `$EDA_SRC` is pointing to the folder containing the sources
-`$ARCH_LEVEL` selects the microarchitecture level to build for (`x86-64-v2`/`v3`/`v4`), injected into `CFLAGS`/`CXXFLAGS`/`FFLAGS`/`FCFLAGS`
+`$ARCH_LEVEL` selects the microarchitecture level to build for (`x86-64-v2`/`v3`/`v4`, `armv8.5-a`), injected into `CFLAGS`/`CXXFLAGS`/`FFLAGS`/`FCFLAGS`
 
-on centos7 run `source packaging/centos7_ci_build_environment.sh`, on alma9 run `source packaging/alma9_ci_build_environment.sh`,
+on centos7 run `source packaging/el7_ci_build_environment.sh`, on alma9/rocky9 run `source packaging/el9_ci_build_environment.sh`,
 from the repository root to get them set up with act home in `/opt/act`.
 
 ## run the steps for building local

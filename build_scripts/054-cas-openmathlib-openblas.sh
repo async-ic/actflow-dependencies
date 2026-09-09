@@ -48,7 +48,8 @@ case "$ARCH_LEVEL" in
 	x86-64-v3) OPENBLAS_TARGET=HASWELL ;;
 	x86-64-v2) OPENBLAS_TARGET=NEHALEM ;;
 	armv9-a)   OPENBLAS_TARGET=ARMV9SME ;;
-	armv8-a)   OPENBLAS_TARGET=ARMV8 ;;
+	# no per-8.x arm targets in OpenBLAS, generic ARMV8 base + DYNAMIC_ARCH runtime dispatch
+	armv8.7-a | armv8.5-a | armv8-a) OPENBLAS_TARGET=ARMV8 ;;
 	*) OPENBLAS_TARGET= ;;
 esac
 

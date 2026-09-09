@@ -77,7 +77,7 @@ ln -sf gcc $ACT_HOME/bin/cc
 
 rm -rf $BOOTSTRAP_ROOT
 
-# x86_64-linux hardcodes runtime libs into lib64/ regardless of --libdir (that
+# linux64 targets (x86_64, aarch64) hardcode runtime libs into lib64/ regardless of --libdir (that
 # only covers gcc's own host-side bits) - consolidate into lib/ to match the
 # rest of the project's convention (rpath, -L flags, ...).
 if [ -d $ACT_HOME/lib64 ]; then

@@ -1,8 +1,9 @@
-# Builds 3 portable variants of the same dependency tree, differing only by
+# Builds 4 portable variants of the same dependency tree, differing only by
 # base image + -march level (component versions are unchanged):
 #   x86-64-v2 : CentOS 7 -> ABI 3.10   (baseline toolchain)
 #   x86-64-v3 : AlmaLinux 9 -> ABI 5.14
 #   x86-64-v4 : AlmaLinux 9 -> ABI 5.14
+#   armv8.5-a : Rocky 9 -> ABI 5.14    (aarch64, tart VM runners)
 
 # a YYYY-MM-DD_hash tag is auto-created by the release job for an already-published
 # release; its tag pipeline would only rebuild and re-release what already exists.
@@ -32,6 +33,8 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_SUBMODULE_DEPTH: 1
   ACT_HOME: ${CI_PROJECT_DIR}/opt/act
+  # arm64 tart VM images from lo
+  TART_IMAGES: ${CI_REGISTRY}/mirror/cirruslabs/images
 
 # sources for build + tarball required for copyleft-licenses.
 prepare:sources:
@@ -51,14 +54,14 @@ prepare:sources:
       dotenv: actflow_dep.env
     expire_in: 1 week
 
-.build_centos7: &build_centos7
+.build_el7: &build_el7
   image: centos:7.2.1511
   script:
     - bash packaging/000-check_arch_level.sh
-    - bash packaging/centos7_install_build_system.sh
+    - bash packaging/el7_install_build_system.sh
     - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
     - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
-    - source packaging/centos7_ci_build_environment.sh
+    - source packaging/el7_ci_build_environment.sh
     - bash packaging/002-build.sh
     - bash packaging/003-pack_binaries.sh
     - bash packaging/004-build_testing.sh
@@ -73,15 +76,16 @@ prepare:sources:
       - logs/
     expire_in: 1 week
 
-.build_alma9: &build_alma9
-  image: almalinux:9
+# image per job: almalinux:9 container (x86-64-v3/v4) / mirrored rocky:9 tart VM (armv8.5-a)
+.build_el9: &build_el9
+  image: $BUILD_IMAGE
   before_script:
     - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
     - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
   script:
     - bash packaging/000-check_arch_level.sh
-    - bash packaging/alma9_install_build_system.sh
-    - source packaging/alma9_ci_build_environment.sh
+    - bash packaging/el9_install_build_system.sh
+    - source packaging/el9_ci_build_environment.sh
     - bash packaging/002-build.sh
     - bash packaging/003-pack_binaries.sh
     - bash packaging/004-build_testing.sh
@@ -97,9 +101,10 @@ prepare:sources:
     expire_in: 1 week
 
 # runner tags: build+test carry the arch tag pinning the CPU baseline that
-# 000-check_arch_level.sh verifies, every job carries "container" (docker executor).
+# 000-check_arch_level.sh verifies, plus the executor tag - "container" (docker) or
+# "tart" (arm64 VM runners, which boot VM images instead of containers).
 build:x86-64-v2:
-  <<: *build_centos7
+  <<: *build_el7
   stage: build
   needs: ["prepare:sources"]
   tags: [x86-64-v2, container]
@@ -108,21 +113,34 @@ build:x86-64-v2:
     GIT_SUBMODULE_STRATEGY: none
 
 build:x86-64-v3:
-  <<: *build_alma9
+  <<: *build_el9
   stage: build
   needs: ["prepare:sources"]
   tags: [x86-64-v3, container]
   variables:
     ARCH_LEVEL: x86-64-v3
+    BUILD_IMAGE: almalinux:9
     GIT_SUBMODULE_STRATEGY: none
 
 build:x86-64-v4:
-  <<: *build_alma9
+  <<: *build_el9
   stage: build
   needs: ["prepare:sources"]
   tags: [x86-64-v4, container]
   variables:
     ARCH_LEVEL: x86-64-v4
+    BUILD_IMAGE: almalinux:9
+    GIT_SUBMODULE_STRATEGY: none
+
+# aarch64: the tart runners only boot VM images -> Rocky 9
+build:armv8.5-a:
+  <<: *build_el9
+  stage: build
+  needs: ["prepare:sources"]
+  tags: [armv8.5-a, tart]
+  variables:
+    ARCH_LEVEL: armv8.5-a
+    BUILD_IMAGE: ${TART_IMAGES}/rocky:9
     GIT_SUBMODULE_STRATEGY: none
 
 # distro portability matrix: each packaged variant tested against target OSes
@@ -219,6 +237,32 @@ test:x86-64-v4:
   parallel: *test_matrix_x86_abi_514
   image: $DISTRO_IMAGE
 
+# aarch64 targets: limited to the mirrored tart VM images, nstalls need sudo, the VMs run the job unprivileged.
+test:armv8.5-a:
+  <<: *test_script
+  stage: test
+  needs: ["prepare:sources", "build:armv8.5-a"]
+  tags: [armv8.5-a, tart]
+  variables:
+    ARCH_LEVEL: armv8.5-a
+    GIT_SUBMODULE_STRATEGY: none
+    TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
+  parallel:
+    matrix:
+      - DISTRO_IMAGE: ${TART_IMAGES}/rocky:9        # glibc 2.34, the build image
+      - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:24.04   # kernel 6.8
+        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+      - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:22.04   # kernel 5.15, LTS standard support to 2027-04
+        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+      - DISTRO_IMAGE: ${TART_IMAGES}/debian:trixie  # 13, kernel 6.12
+        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+      - DISTRO_IMAGE: ${TART_IMAGES}/debian:bookworm # 12, kernel 6.1
+        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+      - DISTRO_IMAGE: ${TART_IMAGES}/fedora:42      # kernel 6.14
+      - DISTRO_IMAGE: ${TART_IMAGES}/fedora:39
+      - DISTRO_IMAGE: ${TART_IMAGES}/fedora:38
+  image: $DISTRO_IMAGE
+
 # one release job per arch, each only linking its own packages, so a delayed or failed
 # arch still leaves the others released. 
 .release: &release
@@ -255,6 +299,14 @@ release:x86-64-v4:
     ARCH_LEVEL: x86-64-v4
     GIT_SUBMODULE_STRATEGY: none
 
+# arch-independent (only links the arm packages), so it stays on the container runners
+release:armv8.5-a:
+  <<: *release
+  needs: ["prepare:sources", "build:armv8.5-a", "test:armv8.5-a"]
+  variables:
+    ARCH_LEVEL: armv8.5-a
+    GIT_SUBMODULE_STRATEGY: none
+
 # Retention sweep: one job for all arches, gated on a successful release
 cleanup:packages:
   stage: clean
@@ -269,6 +321,7 @@ cleanup:packages:
     - release:x86-64-v2
     - release:x86-64-v3
     - release:x86-64-v4
+    - release:armv8.5-a
   before_script:
     - apt-get -q update -y >/dev/null && apt-get -q install -y jq >/dev/null
   script:
