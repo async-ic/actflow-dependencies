@@ -138,6 +138,10 @@ build:armv8.5-a:
   stage: build
   needs: ["prepare:sources"]
   tags: [armv8.5-a, tart]
+  # the VM images carry no git, the runner needs it before it can clone
+  hooks:
+    pre_get_sources_script:
+      - sudo dnf install -y git
   variables:
     ARCH_LEVEL: armv8.5-a
     BUILD_IMAGE: ${TART_IMAGES}/rocky:9
@@ -243,21 +247,27 @@ test:armv8.5-a:
   stage: test
   needs: ["prepare:sources", "build:armv8.5-a"]
   tags: [armv8.5-a, tart]
+  # the VM images carry no git, the runner needs it before it can clone; the deb
+  # images get their curl in the same call, one apt-get update for both
+  hooks:
+    pre_get_sources_script:
+      - eval "$VM_DEPS_INSTALL_CMD"
   variables:
     ARCH_LEVEL: armv8.5-a
     GIT_SUBMODULE_STRATEGY: none
-    TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
+    TEST_DEPS_INSTALL_CMD: "true" # tart deps are installed pre-clone instead
+    VM_DEPS_INSTALL_CMD: "sudo dnf install -y git" # rpm images, deb images override
   parallel:
     matrix:
       - DISTRO_IMAGE: ${TART_IMAGES}/rocky:9        # glibc 2.34, the build image
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:24.04   # kernel 6.8
-        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+        VM_DEPS_INSTALL_CMD: &deb_vm_deps "sudo apt-get update -qq && sudo apt-get install -y git curl"
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:22.04   # kernel 5.15, LTS standard support to 2027-04
-        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+        VM_DEPS_INSTALL_CMD: *deb_vm_deps
       - DISTRO_IMAGE: ${TART_IMAGES}/debian:trixie  # 13, kernel 6.12
-        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+        VM_DEPS_INSTALL_CMD: *deb_vm_deps
       - DISTRO_IMAGE: ${TART_IMAGES}/debian:bookworm # 12, kernel 6.1
-        TEST_DEPS_INSTALL_CMD: "sudo apt-get update -qq && sudo apt-get install -y curl"
+        VM_DEPS_INSTALL_CMD: *deb_vm_deps
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:42      # kernel 6.14
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:39
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:38
