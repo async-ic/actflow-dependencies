@@ -28,6 +28,11 @@ cd $EDA_SRC/org-gnu-automake
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-automake
 ./bootstrap || exit 1
 ./configure --prefix=$ACT_HOME || exit 1
+# doc/amhello-1.0.tar.gz runs a nested autoreconf but declares no dependency on the
+# generated tools it calls - build those first, else a bounded -j starts the rule
+# before they exist ("recipe failed", details only in doc/amhello/amhello-output.tmp).
+APIVERSION=$(sed -n 's/^APIVERSION = //p' Makefile)
+make -j$MAKE_JOBS bin/aclocal-$APIVERSION bin/automake-$APIVERSION lib/Automake/Config.pm || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1
 # also search the system aclocal dir for host m4 macros (libtool, pkg-config),

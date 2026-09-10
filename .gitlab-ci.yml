@@ -147,7 +147,7 @@ build:armv8.5-a:
     BUILD_IMAGE: ${TART_IMAGES}/rocky:9
     GIT_SUBMODULE_STRATEGY: none
     # 16GB host / 3 concurrent VMs, nproc reports all host cores -> ld gets OOM-killed
-    MAKE_JOBS: "2"
+    MAKE_JOBS: "3"
 
 # distro portability matrix: each packaged variant tested against target OSes
 .test_script: &test_script
