@@ -1,0 +1,25 @@
+gkbuild.cmake appends -march=native after the CFLAGS -march=${ARCH_LEVEL}, so the
+last -march wins and metis is tuned to the build runner instead of the packaged
+baseline. On aarch64 gcc also forwards its native expansion
+(-march=armv8-a+flagm2+lse+...) to the assembler, which does not know those
+extension names -> build failure. Drop the flag, CFLAGS sets the baseline.
+
+--- conf/gkbuild.cmake
++++ conf/gkbuild.cmake
+@@ -32,12 +32,10 @@
+ if(VALGRIND)
+   set(GK_COPTIONS "${GK_COPTIONS} -march=x86-64 -mtune=generic")
+ else()
+-# -march=native is not a valid flag on PPC:
+-if(CMAKE_SYSTEM_PROCESSOR MATCHES "power|ppc|powerpc|ppc64|powerpc64" OR (APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES "ppc|ppc64"))
+-  set(GK_COPTIONS "${GK_COPTIONS} -mtune=native")
+-else()
+-  set(GK_COPTIONS "${GK_COPTIONS} -march=native")
+-endif()
++# no -march/-mtune=native: the package is built once per ARCH_LEVEL baseline and
++# must run on every CPU of that level; on aarch64 gcc additionally forwards the
++# native -march expansion to the assembler, which rejects the extension names.
++# the -march baseline comes from CFLAGS.
+ endif(VALGRIND)
+ # GCC warnings.
+   set(GK_COPTIONS "${GK_COPTIONS} -Werror -Wall -pedantic -Wno-unused-function -Wno-unused-but-set-variable -Wno-unused-variable -Wno-unknown-pragmas -Wno-unused-label")
