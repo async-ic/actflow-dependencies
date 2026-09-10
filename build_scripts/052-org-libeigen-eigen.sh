@@ -37,7 +37,7 @@ cmake \
 -D CMAKE_BUILD_TYPE=Release \
 -D FFTW_LIBRARIES=$ACT_HOME/lib \
 .. || exit 1
-make -j4 || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
  
 # relative link: an absolute $ACT_HOME target bakes the build-time path and dangles after

@@ -32,10 +32,10 @@ then
         echo
 fi
 
-# -j for all build scripts. An unbounded -j OOM-kills cc1plus/ld where a runner has
-# little RAM per core (~1.5GB per compile or link is the peak), so MAKE_JOBS is set
-# per runner in .gitlab-ci.yml; nproc when unset. The report below shows what the
-# runner really grants - nproc and _PHYS_PAGES ignore cgroup limits, so log both.
+# -j for all build scripts. A runner can hold far less RAM per core than a compile or
+# link needs (~2GB for the heavy c++ TUs), then an unbounded -j OOM-kills cc1plus/ld,
+# so MAKE_JOBS is set per runner in .gitlab-ci.yml; nproc when unset. The report below
+# shows what the runner really grants - nproc and _PHYS_PAGES ignore cgroup limits.
 : ${MAKE_JOBS:=$(nproc)}
 export MAKE_JOBS
 CG_MEM=$(cat /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null | head -1)

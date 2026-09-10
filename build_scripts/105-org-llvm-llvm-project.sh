@@ -74,10 +74,10 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D LLVM_RUNTIME_DISTRIBUTION_COMPONENTS="cxx-headers" \
   -G "Unix Makefiles" \
   ../llvm
-  # runtimes in ONE sub-make first, then install so -j4 runs
-  # up to 4 makes -> race condition.
-  make -j4 runtimes || exit 1
-  make -j4 install-distribution || exit 1
+  # runtimes in ONE sub-make first, then install so a parallel -j runs
+  # up to MAKE_JOBS makes -> race condition.
+  make -j$MAKE_JOBS runtimes || exit 1
+  make -j$MAKE_JOBS install-distribution || exit 1
 
   # compiler-rt builtins+crt, built by the just-installed clang, into its resource dir.
   # Only builtins+crt (no sanitizers/profile/etc); COMPILER_*_WORKS bypass the C++/link
@@ -110,7 +110,7 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D CMAKE_INSTALL_PREFIX="$RESDIR" \
   -G "Unix Makefiles" \
   ../compiler-rt
-  make -j4 builtins crt || exit 1
+  make -j$MAKE_JOBS builtins crt || exit 1
   make install-builtins install-crt || exit 1
 unset LD_LIBRARY_PATH
 
