@@ -184,8 +184,9 @@ test:x86-64-v2:
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
       - DISTRO_IMAGE: ubuntu:22.04            # kernel 5.15, LTS standard support to 2027-04
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
-      - DISTRO_IMAGE: debian:bullseye         # 11, kernel 5.10, oldest debian
-        TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
+      - DISTRO_IMAGE: debian:bullseye         # 11, kernel 5.10, oldest debian, EOL 2026-08-31
+        # EOL: main on archive.debian.org, bullseye-security expired and not archived yet
+        TEST_DEPS_INSTALL_CMD: "sed -i '/bullseye-security/d; s|deb.debian.org/debian|archive.debian.org/debian|' /etc/apt/sources.list && apt-get update -qq && apt-get install -y curl"
       - DISTRO_IMAGE: debian:bookworm         # 12, kernel 6.1, LTS team since 2026-07-11
         TEST_DEPS_INSTALL_CMD: "apt-get update -qq && apt-get install -y curl"
       - DISTRO_IMAGE: fedora:25               # kernel 4.8 (oldest whose TLS stack can still reach the registry)
