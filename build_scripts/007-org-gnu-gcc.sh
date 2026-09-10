@@ -39,10 +39,17 @@ BOOTSTRAP_ROOT=$EDA_SRC/../gcc-bootstrap
 rm -rf $BOOTSTRAP_ROOT
 mkdir -p $BOOTSTRAP_ROOT/stage1-build
 
+# job count from RAM: linking cc1plus/lto1 is the memory peak of the
+# whole dependency build (~1.5GB per link), the VM runners are ram not core limited.
+GCC_JOBS=$(( $(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / 1500000000 ))
+[ "$GCC_JOBS" -lt 1 ] && GCC_JOBS=1
+[ "$GCC_JOBS" -gt "$(nproc)" ] && GCC_JOBS=$(nproc)
+echo "building with -j$GCC_JOBS ($(nproc) cpus)"
+
 cd $BOOTSTRAP_ROOT/stage1-build
 $EDA_SRC/org-gnu-gcc/configure --prefix=$BOOTSTRAP_ROOT/stage1 \
 	--enable-languages=c,c++ --disable-multilib --disable-bootstrap --with-pic || exit 1
-make -j$(nproc) || exit 1
+make -j$GCC_JOBS || exit 1
 make install || exit 1
 
 # stage 2: gcc 16 (c,c++,fortran), 3-stage self-comparing bootstrap, installed
@@ -63,12 +70,19 @@ export CC=gcc CXX=g++
 # (libstdc++/libgfortran/...) are governed by *_FOR_TARGET instead.
 # no build-time rpath: gcc's recursive make mangles a literal '$ORIGIN', and patchelf
 # adds the real rpath post-install below (it can add one to binaries that have none).
+# --with-build-config=no: the default 'bootstrap-debug' appends -gtoggle to stage 2,
+# which would switch debug info back ON for the flags set on make below. Only the
+# debug-vs-nodebug codegen check is dropped, the stage2/stage3 object compare stays.
 $EDA_SRC/org-gnu-gcc/configure --prefix=$ACT_HOME --libdir=$ACT_HOME/lib \
 	--enable-languages=c,c++,fortran --disable-multilib --disable-libsanitizer --disable-libitm --disable-nls --with-pic \
+	--with-build-config=no \
 	CFLAGS_FOR_TARGET="-I$ACT_HOME/include ${CFLAGS}" \
 	CXXFLAGS_FOR_TARGET="-I$ACT_HOME/include ${CXXFLAGS}" \
 	LDFLAGS_FOR_TARGET="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
-make -j$(nproc) || exit 1
+# STAGE1_CFLAGS/BOOT_CFLAGS: the bootstrap stages ignore CFLAGS and default to
+# '-g' / '-g -O2'. install-strip discards that debug info, linking it is what
+# OOM-killed ld on the arm VM.
+make -j$GCC_JOBS STAGE1_CFLAGS='-O2' BOOT_CFLAGS='-O2' || exit 1
 make install-strip || exit 1
 
 # symlink cc->gcc: gcc ships no 'cc', else cmake probes the host cc (gcc 11) and
