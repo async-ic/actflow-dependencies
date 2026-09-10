@@ -22,7 +22,7 @@ cd $EDA_SRC/org-tcltk-tcl
 cp license.terms $ACT_HOME/license/LICENSE_org-tcltk-tcl
 cd unix
 ./configure --prefix=$ACT_HOME  CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 if [ ! -f $ACT_HOME/bin/tclsh ]; then
   cd $ACT_HOME/bin/

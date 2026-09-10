@@ -33,6 +33,15 @@ then
         exit 1
 fi
 
+# -j for all build scripts, set per runner in .gitlab-ci.yml - see ./build
+: ${MAKE_JOBS:=$(nproc)}
+export MAKE_JOBS
+CG_MEM=$(cat /sys/fs/cgroup/memory.max /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null | head -1)
+CG_CPU=$(cat /sys/fs/cgroup/cpu.max /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null | head -1)
+echo "cpus (nproc): $(nproc), memory (_PHYS_PAGES): $(( $(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / 1024 / 1024 ))MB"
+echo "cgroup memory: ${CG_MEM:-none}, cgroup cpu: ${CG_CPU:-none}"
+echo "building with -j$MAKE_JOBS"
+
 #
 # Per-build logs kept out of the CI console.
 #

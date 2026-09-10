@@ -41,7 +41,7 @@ cmake \
 -D CMAKE_C_FLAGS="-D_POSIX_C_SOURCE=199309L ${CFLAGS}" \
 $EDA_SRC/umn-karypislab-gklib || exit 1
 
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 
 echo 
@@ -58,7 +58,7 @@ BUILDDIR=$EDA_SRC/umn-karypislab-metis/build \
 make config i64=set r64=set CONFIG_FLAGS="-D CMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' -D CMAKE_SHARED_LINKER_FLAGS=-Wl,-rpath,'$ORIGIN/../lib' -D CMAKE_INSTALL_PREFIX=$ACT_HOME -D CMAKE_INSTALL_LIBDIR=lib -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib -D CMAKE_INCLUDE_PATH=$ACT_HOME/include -D CMAKE_POSITION_INDEPENDENT_CODE=ON -D CMAKE_BUILD_TYPE=Release -D OPENMP=set "\
  || exit 1
 cd $EDA_SRC/umn-karypislab-metis/build
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 
 echo 
@@ -88,5 +88,5 @@ cmake \
 -D CMAKE_C_FLAGS="-D_POSIX_C_SOURCE=199309L -Wno-error=incompatible-pointer-types ${CFLAGS}" \
 $EDA_SRC/umn-karypislab-parmetis || exit 1
 
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1

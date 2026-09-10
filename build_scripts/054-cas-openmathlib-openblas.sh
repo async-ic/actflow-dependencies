@@ -53,7 +53,7 @@ case "$ARCH_LEVEL" in
 	*) OPENBLAS_TARGET= ;;
 esac
 
-make -j TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=32 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
+make -j$MAKE_JOBS TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=32 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
 make PREFIX=$ACT_HOME install  || exit 1
 cd $ACT_HOME/lib/
 ln -s libopenblas.so libblas.so

@@ -27,5 +27,5 @@ sed -i 's/\/..\/lib64//' Makefile
 cd *-linux-gnu*
 sed -i 's/\/..\/lib64//' Makefile
 cd $EDA_SRC/org-libffi-libffi
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1

@@ -20,6 +20,6 @@ echo "#############################"
 echo "# zlib"
 cd $EDA_SRC/org-madler-zlib
 ./configure --prefix $ACT_HOME || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 cp README $ACT_HOME/license/LICENSE_zlib.txt

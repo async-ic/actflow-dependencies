@@ -26,6 +26,6 @@ cd "$EDA_SRC/org-debian-libedit"
 find . \( -name "*.in" -o -name configure -o -name aclocal.m4 \) -exec touch {} +
 # --disable-examples: not shipped, saves build time/space (the library itself is unaffected)
 ./configure --prefix $ACT_HOME --disable-examples LIBS="-L$ACT_HOME/lib ${LIBS}" CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib"  || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 cp COPYING $ACT_HOME/license/LICENSE_libedit.txt

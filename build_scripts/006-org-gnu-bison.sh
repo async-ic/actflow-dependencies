@@ -46,5 +46,5 @@ ln -s ../../org-gnu-autoconf submodules/autoconf
 # used verbatim and m4sugar.m4 is unfound once ACT_HOME moves. Enabled, it derives the
 # datadir from the executable location at runtime (matches the bundle's $ORIGIN rpath).
 ./configure --prefix=$ACT_HOME --enable-relocatable CFLAGS="-std=gnu11 ${CFLAGS}" || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1

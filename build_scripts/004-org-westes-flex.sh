@@ -28,5 +28,5 @@ cd $EDA_SRC/org-westes-flex
 cp COPYING $ACT_HOME/license/LICENSE_org-westes-flex
 ./autogen.sh || exit 1
 ./configure --prefix=$ACT_HOME || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1

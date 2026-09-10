@@ -28,7 +28,7 @@ cd $EDA_SRC/org-gnu-automake
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-automake
 ./bootstrap || exit 1
 ./configure --prefix=$ACT_HOME || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 # also search the system aclocal dir for host m4 macros (libtool, pkg-config),
 # else deps regenerating their build system fail "LIBTOOL is undefined".

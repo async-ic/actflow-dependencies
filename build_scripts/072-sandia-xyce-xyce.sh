@@ -54,7 +54,7 @@ $EDA_SRC/sandia-xyce-xyce  || exit 1
 echo "==== build xyce ===="
 make -j2 || exit 1
 echo "==== build xyce c interface ===="
-make xycecinterface -j || exit 1
+make xycecinterface -j$MAKE_JOBS || exit 1
 echo "==== install xyce ===="
 make install || exit 1
 

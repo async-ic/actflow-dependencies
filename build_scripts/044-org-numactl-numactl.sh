@@ -21,7 +21,7 @@ echo "# numactl"
 cd $EDA_SRC/org-numactl-numactl
 ./autogen.sh || exit 1
 ./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 cp LICENSE.GPL2 $ACT_HOME/license/LICENSE_org-numactl-numactl
 cat LICENSE.LGPL2.1 >> $ACT_HOME/license/LICENSE_org-numactl-numactl

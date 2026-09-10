@@ -56,7 +56,7 @@ common_cfg=(
 # Its generator (MKfallback.sh) needs a version-matched tic/infocmp to compile 6.6's
 # terminfo.src (host tic 5.9 is too old); pass 1 installs them, pass 2 uses them.
 ./configure "${common_cfg[@]}" || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 
 # pass 2: regenerate with fallbacks using the just-installed 6.6 tic/infocmp. MKfallback
@@ -71,7 +71,7 @@ make distclean || exit 1
   --with-tic-path="$ACT_HOME/bin/tic" \
   --with-infocmp-path="$ACT_HOME/bin/infocmp" \
   || exit 1
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
 cp COPYING $ACT_HOME/license/LICENSE_ncurses.txt
 

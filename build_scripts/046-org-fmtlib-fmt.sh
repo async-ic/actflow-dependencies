@@ -35,5 +35,5 @@ cmake \
 -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
  .. || exit 1
 sed -i 's/\/lib64/\/lib/g' cmake_install.cmake
-make -j || exit 1
+make -j$MAKE_JOBS || exit 1
 make install || exit 1
