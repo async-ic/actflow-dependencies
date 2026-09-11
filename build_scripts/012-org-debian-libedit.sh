@@ -21,7 +21,7 @@ echo "# libedit"
 cd "$EDA_SRC/org-debian-libedit"
 # use the shipped configure, not autoreconf: configure.ac needs AC_CHECK_INCLUDES_DEFAULT
 # (autoconf 2.70+), the host has 2.69, so regenerating produces a broken configure.
-# git checkout drops mtimes, so make would try to re-run the (absent) automake-1.18 to
+# git checkout drops mtimes, so make would try to re-run the (absent) versioned automake to
 # refresh Makefile.in; touch the generated files newer than their sources so they look current.
 find . \( -name "*.in" -o -name configure -o -name aclocal.m4 \) -exec touch {} +
 # --disable-examples: not shipped, saves build time/space (the library itself is unaffected)

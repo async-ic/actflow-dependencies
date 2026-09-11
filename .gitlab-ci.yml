@@ -266,7 +266,7 @@ test:armv8.5-a:
       # deb images: their ~/.bash_logout runs clear_console, which fails without a tty
       # and leaks status 1 past the stage script's "exit 0" -> run a non-login shell
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:24.04   # kernel 6.8
-        VM_DEPS_INSTALL_CMD: &deb_vm_deps "sudo apt-get update -qq && sudo apt-get install -y git curl"
+        VM_DEPS_INSTALL_CMD: &deb_vm_deps "sudo apt-get update -qq && sudo apt-get install -y git curl binutils"
         TART_EXECUTOR_SHELL: &deb_shell "bash"
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:22.04   # kernel 5.15, LTS standard support to 2027-04
         VM_DEPS_INSTALL_CMD: *deb_vm_deps

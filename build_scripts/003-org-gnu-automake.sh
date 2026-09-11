@@ -16,9 +16,9 @@
 
 # deps: 002-autoconf; host perl/cc | used by: 006-bison, 022-libffi, 030-mpich, 044-numactl
 
-# builds automake 1.18.1 into $ACT_HOME (first on PATH); host 1.13 is too old for
+# builds automake into $ACT_HOME (first on PATH); host 1.13 is too old for
 # 006-bison (AM_INIT_AUTOMAKE >=1.15) and mpich autogen (PAC_SUBCFG unexpanded).
-# after 002-autoconf: regenerates against the 2.72 on PATH. numbered 003 to precede
+# after 002-autoconf: regenerates against the autoconf on PATH. numbered 003 to precede
 # its users: automake is perl, needs no compiler/flex/bison.
 # bootstrap generates the missing configure. build-only, trimmed by 021.
 
@@ -26,7 +26,17 @@ echo "#############################"
 echo "# automake"
 cd $EDA_SRC/org-gnu-automake
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-automake
+# since 1.19 bootstrap refuses unless .git is a directory - a guard against release
+# tarballs, it never calls git. Packed sources (tar --exclude-vcs) carry no .git and a
+# submodule checkout carries a gitlink file, so stub one in and restore after.
+gitlink=
+if [ ! -d .git ]; then
+  [ -e .git ] && { gitlink=$(cat .git); rm -f .git; }
+  mkdir .git && stub=1
+fi
 ./bootstrap || exit 1
+[ -n "$stub" ] && rmdir .git
+[ -n "$gitlink" ] && printf '%s\n' "$gitlink" > .git
 ./configure --prefix=$ACT_HOME || exit 1
 # doc/amhello-1.0.tar.gz runs a nested autoreconf but declares no dependency on the
 # generated tools it calls - build those first, else a bounded -j starts the rule
