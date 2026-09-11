@@ -19,7 +19,8 @@
 # builds a fully self-hosted gcc 16 (c,c++,fortran) into $ACT_HOME. $ACT_HOME/bin
 # is first on PATH, so every later build_scripts/*.sh compiles with gcc 16 instead
 # of the host/devtoolset compiler; the shipped package carries a complete, matching
-# compiler + runtime (libstdc++/libgcc_s/libgfortran/libgomp/libquadmath).
+# compiler + runtime (libstdc++/libgcc_s/libgfortran/libgomp, plus libquadmath on
+# x86 - gcc has no __float128 on aarch64, so none is built there).
 
 echo
 echo "#### build a fully bootstrapped gcc 16, installed into ACT_HOME ####"

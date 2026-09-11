@@ -20,6 +20,12 @@ echo "# gcc lib test for linking errors"
 
 source tests/test_helper.sh
 
-lookup_shared_library "libquadmath.so"
+# gcc builds libquadmath only where it provides __float128: i386/x86_64, ia64,
+# loongarch, hppa and ppc64. aarch64 has none (long double is binary128 there),
+# so the lib can never be packaged for it.
+case "$(uname -m)" in
+i?86 | x86_64) lookup_shared_library "libquadmath.so" ;;
+*) echo "skip libquadmath.so: not built by gcc on $(uname -m)" ;;
+esac
 lookup_shared_library "libgfortran.so"
 lookup_shared_library "libgomp.so"
