@@ -259,22 +259,38 @@ test:armv8.5-a:
     ARCH_LEVEL: armv8.5-a
     GIT_SUBMODULE_STRATEGY: none
     TEST_DEPS_INSTALL_CMD: "true" # tart deps are installed pre-clone instead
-    VM_DEPS_INSTALL_CMD: "sudo dnf install -y git" # rpm images, deb images override
+    VM_DEPS_INSTALL_CMD: "sudo dnf install -y git binutils" # rpm images, deb images override
   parallel:
     matrix:
       - DISTRO_IMAGE: ${TART_IMAGES}/rocky:9        # glibc 2.34, the build image
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:24.04   # kernel 6.8
         VM_DEPS_INSTALL_CMD: &deb_vm_deps "sudo apt-get update -qq && sudo apt-get install -y git curl"
+        CI_DEBUG_TRACE: "true"
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:22.04   # kernel 5.15, LTS standard support to 2027-04
         VM_DEPS_INSTALL_CMD: *deb_vm_deps
       - DISTRO_IMAGE: ${TART_IMAGES}/debian:trixie  # 13, kernel 6.12
         VM_DEPS_INSTALL_CMD: *deb_vm_deps
+        CI_DEBUG_TRACE: "true"
       - DISTRO_IMAGE: ${TART_IMAGES}/debian:bookworm # 12, kernel 6.1
         VM_DEPS_INSTALL_CMD: *deb_vm_deps
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:42      # kernel 6.14
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:39
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:38
   image: $DISTRO_IMAGE
+
+probe:tart:
+  stage: test
+  tags: [armv8.5-a, tart]
+  needs: []
+  image: ${TART_IMAGES}/${PROBE_IMAGE}
+  variables:
+    GIT_STRATEGY: none
+    CI_DEBUG_TRACE: "true"
+  parallel:
+    matrix:
+      - PROBE_IMAGE: [debian:trixie, rocky:9]
+  script:
+    - echo probe-ok
 
 # one release job per arch, each only linking its own packages, so a delayed or failed
 # arch still leaves the others released. 
