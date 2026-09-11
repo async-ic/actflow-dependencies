@@ -263,34 +263,24 @@ test:armv8.5-a:
   parallel:
     matrix:
       - DISTRO_IMAGE: ${TART_IMAGES}/rocky:9        # glibc 2.34, the build image
+      # deb images: their ~/.bash_logout runs clear_console, which fails without a tty
+      # and leaks status 1 past the stage script's "exit 0" -> run a non-login shell
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:24.04   # kernel 6.8
         VM_DEPS_INSTALL_CMD: &deb_vm_deps "sudo apt-get update -qq && sudo apt-get install -y git curl"
-        CI_DEBUG_TRACE: "true"
+        TART_EXECUTOR_SHELL: &deb_shell "bash"
       - DISTRO_IMAGE: ${TART_IMAGES}/ubuntu:22.04   # kernel 5.15, LTS standard support to 2027-04
         VM_DEPS_INSTALL_CMD: *deb_vm_deps
+        TART_EXECUTOR_SHELL: *deb_shell
       - DISTRO_IMAGE: ${TART_IMAGES}/debian:trixie  # 13, kernel 6.12
         VM_DEPS_INSTALL_CMD: *deb_vm_deps
-        CI_DEBUG_TRACE: "true"
+        TART_EXECUTOR_SHELL: *deb_shell
       - DISTRO_IMAGE: ${TART_IMAGES}/debian:bookworm # 12, kernel 6.1
         VM_DEPS_INSTALL_CMD: *deb_vm_deps
+        TART_EXECUTOR_SHELL: *deb_shell
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:42      # kernel 6.14
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:39
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:38
   image: $DISTRO_IMAGE
-
-probe:tart:
-  stage: test
-  tags: [armv8.5-a, tart]
-  needs: []
-  image: ${TART_IMAGES}/${PROBE_IMAGE}
-  variables:
-    GIT_STRATEGY: none
-    CI_DEBUG_TRACE: "true"
-  parallel:
-    matrix:
-      - PROBE_IMAGE: [debian:trixie, rocky:9]
-  script:
-    - echo probe-ok
 
 # one release job per arch, each only linking its own packages, so a delayed or failed
 # arch still leaves the others released. 
