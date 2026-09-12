@@ -73,6 +73,10 @@ for build in build_scripts/0*.sh; do
    then
       echo "FAILED: $build (full log in logs/${name}.log, logs/${name}.err artifacts)"
       echo "--- tail logs/${name}.log ---"; tail -n 40 logs/${name}.log
+      # a warning-heavy build (llvm) buries the failing message thousands of lines above
+      # the tail - grep the error lines out before showing it
+      echo "--- errors logs/${name}.err ---"
+      grep -nE "error:|Error [0-9]|Killed|out of memory|No space left" logs/${name}.err | head -n 20
       echo "--- tail logs/${name}.err ---"; tail -n 40 logs/${name}.err
       exit 1
    fi

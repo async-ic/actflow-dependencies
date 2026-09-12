@@ -13,13 +13,14 @@
 # - libc++/libc++abi/libunwind runtimes are bundled (distribution cxx;cxxabi;unwind)
 #   so the fluid cxx reference builds with `clang++ -stdlib=libc++`: clang-14 is too
 #   old to parse the shipped gcc16 libstdc++, its matched libc++-14 compiles fine.
-#   cxx-headers is a runtimes sub-component, not a runtime_name (cxx/cxxabi/unwind
-#   auto-get top-level targets), so it must go in LLVM_RUNTIME_DISTRIBUTION_COMPONENTS
-#   for an install-cxx-headers forwarding target; else install-distribution omits the
-#   headers. Build via `make install-distribution` ONLY, never `make distribution`: the
-#   latter depends on the raw `cxx-headers` target, an INTERFACE lib with no make rule
-#   ("No rule to make target 'cxx-headers'"). install-<comp> builds its deps first, but
-#   the runtime install-* targets race under -j (see `make runtimes` below).
+#   The libc++ headers ship with install-cxx (libcxx/src/CMakeLists.txt: install-cxx
+#   DEPENDS install-cxx-headers), so cxx-headers must NOT be added to
+#   LLVM_RUNTIME_DISTRIBUTION_COMPONENTS: that only adds a second forwarding target
+#   installing the same headers in a concurrent sub-make, and the two collide -
+#   "file INSTALL cannot set modification time on .../c++/v1/__config" (one replaces
+#   the file while the other stamps it). It was only needed by `make distribution`,
+#   which is not used: that target depends on the raw `cxx-headers` target, an
+#   INTERFACE lib with no make rule ("No rule to make target 'cxx-headers'").
 # - Version ceiling: fluid builds unmodified only up to LLVM 14 (14.0.6 OK;
 #   12/11 OK; 13 is a hole: ConstantAggregateZero::getNumElements). 15+ break on
 #   the new llvm::json vs nlohmann json clash (`using namespace llvm`), plus @16
@@ -71,11 +72,10 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D LLVM_INCLUDE_EXAMPLES=OFF \
   -D LLVM_INCLUDE_TOOLS=ON \
   -D LLVM_DISTRIBUTION_COMPONENTS="opt;clang;clang-resource-headers;llvm-config;llvm-headers;cmake-exports;cxx;cxxabi;unwind" \
-  -D LLVM_RUNTIME_DISTRIBUTION_COMPONENTS="cxx-headers" \
   -G "Unix Makefiles" \
   ../llvm
-  # runtimes in ONE sub-make first, then install so a parallel -j runs
-  # up to MAKE_JOBS makes -> race condition.
+  # runtimes built in ONE sub-make first; install-distribution forwards cxx/cxxabi/unwind
+  # into a sub-make each, which would otherwise build the same runtimes concurrently.
   make -j$MAKE_JOBS runtimes || exit 1
   make -j$MAKE_JOBS install-distribution || exit 1
 
