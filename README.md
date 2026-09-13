@@ -56,35 +56,52 @@ tested on the mirrored arm64 tart VM images only, glibc 2.34 (rocky 9) is the fl
 - ubuntu LTS 22.04 / 24.04
 - fedora 38 / 39 / 42
 
-# How to Package and build
+# How to build it yourself
 
 ## requirements:
 if you build on an older OS your package is compatible with more target platforms, thats why the v2 variant builds on centos7.2
 
-you need gcc 11+, m4, make, autoconf, automake, bison, flex, libtool, python3, csh, patch, texinfo
-(see `packaging/el7_install_build_system.sh` for centos7/v2, `packaging/el9_install_build_system.sh` for alma9/v3+v4 and rocky9/armv8.5-a)
+the build brings its own gcc, cmake, bison and flex into `$ACT_HOME`, the host toolchain only has to
+bootstrap those: gcc 11+, make, m4, autoconf, automake, bison, flex, gperf, libtool, python3, csh, patch,
+texinfo, help2man, gettext, po4a, the gcc arithmetic libraries (gmp, mpfr, mpc), zlib and patchelf.
 
-on macOS you need Xcode and the brew formulae in `packaging/macos_install_build_system.sh`;
-gcc is bootstrapped into `$ACT_HOME` there as well, against the Xcode SDK
-
-## environment variables
-
-`$ACT_HOME` is pointing to the install path
-`$EDA_SRC` is pointing to the folder containing the sources
-`$ARCH_LEVEL` selects the microarchitecture level to build for (`x86-64-v2`/`v3`/`v4`, `armv8.5-a`), injected into `CFLAGS`/`CXXFLAGS`/`FFLAGS`/`FCFLAGS`
-`$PKG_ARCH` is the package/release name token, `$ARCH_LEVEL` on linux and `applem1` on macOS
-(whose `ARCH_LEVEL` is `armv8.5-a` too and would collide)
-`$SOEXT` is the shared object suffix the dependency build systems emit, `.so` or `.dylib`
-
-on centos7 run `source packaging/el7_ci_build_environment.sh`, on alma9/rocky9 run `source packaging/el9_ci_build_environment.sh`,
-on macOS run `source packaging/macos_ci_build_environment.sh`,
-from the repository root to get them set up with act home in `/opt/act`.
+- rhel/centos/fedora: `dnf install gcc gcc-c++ gcc-gfortran m4 autoconf automake bison flex gperf libtool python3 tcsh patch texinfo help2man gettext-devel po4a which gmp-devel mpfr-devel libmpc-devel zlib-devel patchelf gzip`
+  (the CI does this in `packaging/el9_install_build_system.sh`, centos7 needs the SCL toolchain, see `packaging/el7_install_build_system.sh`)
+- debian/ubuntu: `apt install build-essential gfortran m4 autoconf automake bison flex gperf libtool python3 tcsh patch texinfo help2man gettext po4a libgmp-dev libmpfr-dev libmpc-dev zlib1g-dev patchelf gzip`
+- macOS: Xcode plus the brew formulae in `packaging/macos_install_build_system.sh`; there clang is the
+  host compiler (gcc has no aarch64-darwin target) and no fortran is built
 
 ## run the steps for building local
 
-`./build` should do the trick after you have your buildsystem setup properly
+get the sources first - the source tarball of a release carries them in `src/`, a checkout needs
+`git clone --recurse-submodules`. Then only `$ACT_HOME`, the install path, has to be set, everything
+else is defaulted by `./build`:
 
-`./test` runs the linker tests after the build+install
+```
+export ACT_HOME=$(pwd)/opt/act
+./build     # builds and installs the whole dependency tree into $ACT_HOME
+./test      # linker/rpath tests against the install
+```
+
+this builds for the cpu of the machine you build on (`ARCH_LEVEL=native`) and produces no package.
+Export `ARCH_LEVEL` yourself to get a portable build instead (see below); in CI an unset `ARCH_LEVEL`
+fails the job rather than silently building something unportable.
+
+`./clean` resets the source tree, needed before a re-run of `./build`.
+
+## environment variables
+
+`$ACT_HOME` is pointing to the install path, the only one without a default
+`$EDA_SRC` is pointing to the folder containing the sources, defaults to `$(pwd)/src`
+`$ARCH_LEVEL` selects the microarchitecture level to build for (`x86-64-v2`/`v3`/`v4`, `armv8.5-a`), injected into `CFLAGS`/`CXXFLAGS`/`FFLAGS`/`FCFLAGS`, defaults to `native`
+`$MAKE_JOBS` is the `-j` level of every build script, defaults to the host cpu count (lower it if a compile gets OOM-killed, ~2GB per job)
+`$PKG_ARCH` is the package/release name token, `$ARCH_LEVEL` on linux and `applem1` on macOS
+(whose `ARCH_LEVEL` is `armv8.5-a` too and would collide), packaging only
+`$SOEXT` is the shared object suffix the dependency build systems emit, `.so` or `.dylib`
+
+for a packaged build the CI sets those from one place per platform: on centos7 `source packaging/el7_ci_build_environment.sh`,
+on alma9/rocky9 `source packaging/el9_ci_build_environment.sh`, on macOS `source packaging/macos_ci_build_environment.sh`,
+from the repository root to get them set up with act home in `/opt/act`.
 
 ## run the steps for packaging
 

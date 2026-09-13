@@ -35,6 +35,49 @@ fi
 
 . packaging/relocate.sh
 
+# same local defaults as ./build - the CI values win when a packaging environment is sourced
+if [ x$ARCH_LEVEL = x ]
+then
+        # native is local-only, it must never be packaged - see ./build
+        if [ x$CI != x ]
+        then
+                echo "ARCH_LEVEL is unset in CI, refusing to default to native - set it in .gitlab-ci.yml"
+                exit 1
+        fi
+        export ARCH_LEVEL=native
+fi
+
+if [ x$SOEXT = x ]
+then
+        if [ "$(uname -s)" = "Darwin" ]; then export SOEXT=.dylib; else export SOEXT=.so; fi
+fi
+
+# the toolchain built into ACT_HOME must shadow the host one; no dup stacking
+case ":${PATH}:" in
+        *":${ACT_HOME}/bin:"*) ;;
+        *) export PATH="${ACT_HOME}/bin:${PATH}" ;;
+esac
+
+if [ x$ACTFLOW_ENV_LOADED = x ]
+then
+        # clang on arm64 has no -march=native and wants -mcpu=; probe both - see ./build
+        ARCH_FLAG="-march=$ARCH_LEVEL"
+        printf 'int main(void){return 0;}\n' | ${CC:-cc} $ARCH_FLAG -x c - -o /dev/null 2>/dev/null || ARCH_FLAG="-mcpu=$ARCH_LEVEL"
+        printf 'int main(void){return 0;}\n' | ${CC:-cc} $ARCH_FLAG -x c - -o /dev/null 2>/dev/null || ARCH_FLAG=""
+        export CFLAGS="$ARCH_FLAG -O3 -fPIC ${CFLAGS}"
+        export CXXFLAGS="$ARCH_FLAG -O3 -fPIC ${CXXFLAGS}"
+        if [ "$(uname -s)" = "Darwin" ]
+        then
+                export LDFLAGS="-Wl,-headerpad_max_install_names ${LDFLAGS}"
+        else
+                export FFLAGS="$ARCH_FLAG -O3 -fPIC ${FFLAGS}"
+                export FCFLAGS="$ARCH_FLAG -O3 -fPIC ${FCFLAGS}"
+        fi
+        export ACTFLOW_ENV_LOADED=1
+fi
+
+echo "ACT_HOME $ACT_HOME, EDA_SRC $EDA_SRC, ARCH_LEVEL $ARCH_LEVEL, CFLAGS $CFLAGS"
+
 # -j for all build scripts, set per runner in .gitlab-ci.yml - see ./build
 : ${MAKE_JOBS:=$(cpu_count)}
 export MAKE_JOBS
@@ -72,6 +115,10 @@ for build in build_scripts/1*.sh; do
       exit 1
    fi
 done
+
+# portable-install pass over ACT_HOME, covering the newly added binaries - see ./build
+relocate_tree "$ACT_HOME"
+assert_portable_install "$ACT_HOME" || exit 1
 
 echo
 echo "build done, for linker test run './test'"

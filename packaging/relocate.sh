@@ -13,7 +13,8 @@
 # limitations under the License.
 #
 
-# Sourced, not executed. Holds the portable-install pass and the host helpers
+# Sourced, not executed, by /bin/sh scripts too - keep it POSIX (no arrays, no process
+# substitution, no read -d). Holds the portable-install pass and the host helpers
 # macOS does not provide.
 #
 # relocate_tree <root>: give every binary under <root> a relative rpath to
@@ -126,25 +127,21 @@ _relocate_macho() {
 #   - a load outside the install and the base OS.
 #   - a load still naming $root by absolute path.
 assert_portable_install() {
-	local root=${1:-$ACT_HOME} f dep bad=0
+	local root=${1:-$ACT_HOME} bad
 	[ "$(uname -s)" = "Darwin" ] || return 0
-	while IFS= read -r -d '' f; do
+	# the loop runs in a pipeline subshell, so it reports through its stdout
+	bad=$(find "$root" -type f | while IFS= read -r f; do
 		is_macho "$f" || continue
 		for dep in $(otool -L "$f" 2>/dev/null | tail -n +2 | awk '{print $1}'); do
 			case "$dep" in
-			"$root"/*)
-				echo "not relocated: ${f#$root/} -> $dep" >&2
-				bad=1
-				;;
+			"$root"/*) echo "not relocated: ${f#$root/} -> $dep" ;;
 			@* | /usr/lib/* | /System/*) ;;
-			*)
-				echo "foreign dependency: ${f#$root/} -> $dep" >&2
-				bad=1
-				;;
+			*) echo "foreign dependency: ${f#$root/} -> $dep" ;;
 			esac
 		done
-	done < <(find "$root" -type f -print0)
-	[ $bad -eq 0 ] || {
+	done)
+	[ -z "$bad" ] || {
+		printf '%s\n' "$bad" >&2
 		echo "refusing to package: the install is not self-contained or not relocatable" >&2
 		return 1
 	}
@@ -160,13 +157,13 @@ relocate_tree() {
 
 	case "$(uname -s)" in
 	Darwin)
-		find "$root" -type f -print0 | while IFS= read -r -d '' f; do
+		find "$root" -type f | while IFS= read -r f; do
 			is_macho "$f" || continue
 			_relocate_macho "$f" "$root" "$(rel_path "$(dirname "$f")" "$root/lib")"
 		done
 		;;
 	*)
-		find "$root" -type f -print0 | while IFS= read -r -d '' f; do
+		find "$root" -type f | while IFS= read -r f; do
 			is_elf "$f" || continue
 			rel=$(rel_path "$(dirname "$f")" "$root/lib")
 			# some failures are expected (static binaries, ...), the tests cover the result

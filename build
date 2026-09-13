@@ -25,14 +25,63 @@ then
 	export EDA_SRC=$(pwd)/src
 fi
 
-if [ x$BUILD_GUI = x ]
+. packaging/relocate.sh
+
+# TEst if all vars are defind, default otherwise
+if [ x$ARCH_LEVEL = x ]
 then
-        echo
-	echo "Building without GUI applications, to enable set BUILD_GUI='true' and have X11 and libGLU istalled"
-        echo
+        # a native build is not portable, so it must never be packaged: in CI ($CI is set
+        # by the runner) the missing ARCH_LEVEL is a pipeline bug, not a local build
+        if [ x$CI != x ]
+        then
+                echo "ARCH_LEVEL is unset in CI, refusing to default to native - set it in .gitlab-ci.yml"
+                exit 1
+        fi
+        export ARCH_LEVEL=native
 fi
 
-. packaging/relocate.sh
+if [ x$SOEXT = x ]
+then
+        if [ "$(uname -s)" = "Darwin" ]; then export SOEXT=.dylib; else export SOEXT=.so; fi
+fi
+
+# the toolchain built into ACT_HOME (gcc, cmake, bison, flex) must shadow the host one,
+# else the later dependencies build against the host abi. no dup stacking.
+case ":${PATH}:" in
+        *":${ACT_HOME}/bin:"*) ;;
+        *) export PATH="${ACT_HOME}/bin:${PATH}" ;;
+esac
+
+if [ x$ACTFLOW_ENV_LOADED = x ]
+then
+        # the compiler's own spelling of ARCH_LEVEL: clang on arm64 has no -march=native
+        # and wants -mcpu=; probe both instead of failing in every build script
+        ARCH_FLAG="-march=$ARCH_LEVEL"
+        printf 'int main(void){return 0;}\n' | ${CC:-cc} $ARCH_FLAG -x c - -o /dev/null 2>/dev/null || ARCH_FLAG="-mcpu=$ARCH_LEVEL"
+        printf 'int main(void){return 0;}\n' | ${CC:-cc} $ARCH_FLAG -x c - -o /dev/null 2>/dev/null || ARCH_FLAG=""
+        [ x$ARCH_FLAG = x ] && echo "warning: ${CC:-cc} supports no -march/-mcpu=$ARCH_LEVEL, building for the compiler default"
+        # explicit -O3/-fPIC: CFLAGS overrides each tool's own default optimization/PIC flags
+        export CFLAGS="$ARCH_FLAG -O3 -fPIC ${CFLAGS}"
+        export CXXFLAGS="$ARCH_FLAG -O3 -fPIC ${CXXFLAGS}"
+        if [ "$(uname -s)" = "Darwin" ]
+        then
+                # headerpad: the portable-install pass below rewrites install names and
+                # rpaths with install_name_tool, which needs room in the load commands
+                export LDFLAGS="-Wl,-headerpad_max_install_names ${LDFLAGS}"
+                # no fortran flags: no fortran compiler under the macOS rules, see
+                # packaging/macos_ci_build_environment.sh
+        else
+                export FFLAGS="$ARCH_FLAG -O3 -fPIC ${FFLAGS}"
+                export FCFLAGS="$ARCH_FLAG -O3 -fPIC ${FCFLAGS}"
+        fi
+        export ACTFLOW_ENV_LOADED=1
+fi
+
+echo "ACT_HOME $ACT_HOME"
+echo "EDA_SRC $EDA_SRC"
+echo "ARCH_LEVEL $ARCH_LEVEL"
+echo "SOEXT $SOEXT"
+echo "CFLAGS $CFLAGS"
 
 # -j for all build scripts. A runner can hold far less RAM per core than a compile or
 # link needs (~2GB for the heavy c++ TUs), then an unbounded -j OOM-kills cc1plus/ld,
@@ -83,6 +132,12 @@ for build in build_scripts/0*.sh; do
       exit 1
    fi
 done
+
+# portable-install pass over the whole install: gives every binary an $ORIGIN/@loader_path
+# relative rpath, which ./test asserts. Replaces the per-package LDFLAGS/-Wl,-rpath hacks
+# that mangle $ORIGIN semi sucessfully.
+relocate_tree "$ACT_HOME"
+assert_portable_install "$ACT_HOME" || exit 1
 
 echo
 echo "build done, for linker test run './test'"

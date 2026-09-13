@@ -26,7 +26,7 @@
 set -u
 
 if [ -z "${ARCH_LEVEL:-}" ]; then
-	echo "Please set the environment variable ARCH_LEVEL (x86-64-v2|x86-64-v3|x86-64-v4|armv8.5-a|armv8.7-a)"
+	echo "Please set the environment variable ARCH_LEVEL (native|x86-64-v2|x86-64-v3|x86-64-v4|armv8.5-a|armv8.7-a)"
 	exit 1
 fi
 
@@ -116,6 +116,12 @@ check_macos_features() {
 }
 
 case "$ARCH_LEVEL" in
+native)
+	# local build default (./build): the compiler reads the host cpu itself, and the
+	# result is not portable - nothing to verify here
+	echo "ARCH_LEVEL=native, building for the host cpu"
+	exit 0
+	;;
 x86-64-v2)
 	require_platform "Linux/x86_64"
 	flags=$(grep -m1 '^flags' /proc/cpuinfo)
@@ -145,7 +151,7 @@ armv8.7-a)
 	esac
 	;;
 *)
-	fail "unknown ARCH_LEVEL '${ARCH_LEVEL}' (expected x86-64-v2|x86-64-v3|x86-64-v4|armv8.5-a|armv8.7-a)"
+	fail "unknown ARCH_LEVEL '${ARCH_LEVEL}' (expected native|x86-64-v2|x86-64-v3|x86-64-v4|armv8.5-a|armv8.7-a)"
 	;;
 esac
 

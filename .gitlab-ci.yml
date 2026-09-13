@@ -192,15 +192,14 @@ build:applem1:
   <<: *build_macos
   stage: build
   needs: ["prepare:sources"]
-  tags: [applem1, tart]
+  tags: [armv8.5-a, tart]
   variables:
     ARCH_LEVEL: armv8.5-a
     PKG_ARCH: applem1
     BUILD_IMAGE: ${TART_IMAGES}/macos-sequoia-xcode:latest
     GIT_SUBMODULE_STRATEGY: none
-    # 4 cpus / 8GB on the runner; the heavy c++ TUs (trilinos, xyce) peak ~2GB each.
-    # No gcc bootstrap here - 007 is skipped on macOS, gcc has no aarch64-darwin target.
-    MAKE_JOBS: "3"
+    # No gcc bootstrap here
+    #MAKE_JOBS: "3"
 
 # distro portability matrix: each packaged variant tested against target OSes
 .test_script: &test_script
@@ -348,7 +347,7 @@ test:armv8.5-a:
 test:applem1:
   stage: test
   needs: ["prepare:sources", "build:applem1"]
-  tags: [applem1, tart]
+  tags: [armv8.5-a, tart]
   image: $DISTRO_IMAGE
   variables:
     ARCH_LEVEL: armv8.5-a
