@@ -123,12 +123,8 @@ _relocate_macho() {
 
 # macOS: after relocate_tree the install must be both self-contained and relocatable.
 # Two things are refused:
-#   - a load outside the install and the base OS: a dependency we neither compiled nor
-#     may redistribute, e.g. a cmake project quietly finding a brew library
-#   - a load still naming $root by absolute path: relocation did not take, and the
-#     install breaks as soon as it moves. install_name_tool cannot rewrite every mach-o
-#     (tcl appends its zipfs archive past __LINKEDIT and the tool refuses the file), and
-#     relocate_tree tolerates that failure, so catch it here rather than in the tests.
+#   - a load outside the install and the base OS.
+#   - a load still naming $root by absolute path.
 assert_portable_install() {
 	local root=${1:-$ACT_HOME} f dep bad=0
 	[ "$(uname -s)" = "Darwin" ] || return 0

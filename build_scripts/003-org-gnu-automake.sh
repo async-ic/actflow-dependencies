@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: 002-autoconf; host perl/cc | used by: 006-bison, 022-libffi, 030-mpich, 044-numactl
+# deps: 002-autoconf; host perl/cc | used by: 006-bison, 030-mpich, 044-numactl
 
 # builds automake into $ACT_HOME (first on PATH); host 1.13 is too old for
 # 006-bison (AM_INIT_AUTOMAKE >=1.15) and mpich autogen (PAC_SUBCFG unexpanded).
@@ -26,9 +26,7 @@ echo "#############################"
 echo "# automake"
 cd $EDA_SRC/org-gnu-automake
 cp COPYING $ACT_HOME/license/LICENSE_org-gnu-automake
-# since 1.19 bootstrap refuses unless .git is a directory - a guard against release
-# tarballs, it never calls git. Packed sources (tar --exclude-vcs) carry no .git and a
-# submodule checkout carries a gitlink file, so stub one in and restore after.
+# since 1.19 bootstrap refuses unless .git is a directory
 gitlink=
 if [ ! -d .git ]; then
   [ -e .git ] && { gitlink=$(cat .git); rm -f .git; }
@@ -39,12 +37,11 @@ fi
 [ -n "$gitlink" ] && printf '%s\n' "$gitlink" > .git
 ./configure --prefix=$ACT_HOME || exit 1
 # doc/amhello-1.0.tar.gz runs a nested autoreconf but declares no dependency on the
-# generated tools it calls - build those first, else a bounded -j starts the rule
-# before they exist ("recipe failed", details only in doc/amhello/amhello-output.tmp).
+# generated tools it calls - build those first.
 APIVERSION=$(sed -n 's/^APIVERSION = //p' Makefile)
 make -j$MAKE_JOBS bin/aclocal-$APIVERSION bin/automake-$APIVERSION lib/Automake/Config.pm || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1
-# also search the system aclocal dir for host m4 macros (libtool, pkg-config),
+# search the system aclocal dir for host m4 macros (libtool, pkg-config),
 # else deps regenerating their build system fail "LIBTOOL is undefined".
 echo /usr/share/aclocal > $ACT_HOME/share/aclocal/dirlist

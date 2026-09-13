@@ -14,28 +14,24 @@
 # limitations under the License.
 #
 
-# deps: 005-cmake | used by: downstream ACT tools (runtime); not a trilinos/xyce TPL here
+# DISABLED: no consumer - nothing in the dependency tree or in actflow links or detects
+# libffi.
+
+# deps: 007-gcc, 003-automake (autogen) | used by: downstream (FFI, runtime)
 
 source packaging/relocate.sh
 
 echo "#############################"
-echo "# fmt"
-cd $EDA_SRC/org-fmtlib-fmt
-cp LICENSE.rst $ACT_HOME/license/LICENSE_org-fmtlib-fmt
-
-if [ ! -d build ]; then
-	mkdir build
-fi
-cd $EDA_SRC/org-fmtlib-fmt/build
-cmake \
--D CMAKE_INSTALL_PREFIX=$ACT_HOME \
--D CMAKE_INSTALL_LIBDIR=lib \
--D CMAKE_BUILD_TYPE=Release \
--D CMAKE_POSITION_INDEPENDENT_CODE=TRUE \
--D BUILD_SHARED_LIBS=TRUE \
--D CMAKE_EXE_LINKER_FLAGS="-L${ACT_HOME}/lib" \
--D CMAKE_SHARED_LINKER_FLAGS="-L${ACT_HOME}/lib" \
- .. || exit 1
-sed_i 's/\/lib64/\/lib/g' cmake_install.cmake
+echo "# libffi"
+cd $EDA_SRC/org-libffi-libffi
+cp LICENSE $ACT_HOME/license/LICENSE_org-libffi-libffi
+./autogen.sh || exit 1
+./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
+sed_i 's/\/..\/lib64//' Makefile
+# libffi builds in a host-triple subdir: x86_64-*-linux-gnu / aarch64-*-linux-gnu on
+# linux, aarch64-apple-darwin* on macOS (which has no lib64, so the fixup is a no-op)
+for hostdir in *-linux-gnu* *-apple-darwin*; do
+	[ -d "$hostdir" ] && sed_i 's/\/..\/lib64//' "$hostdir/Makefile"
+done
 make -j$MAKE_JOBS || exit 1
 make install || exit 1

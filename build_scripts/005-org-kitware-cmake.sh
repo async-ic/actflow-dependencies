@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-# deps: host gcc | used by: all cmake builds (046,048,052,056,057,058,060,072)
+# deps: host gcc | used by: all cmake builds (052,056,057,060,072)
 
 echo "#############################"
 echo "#build cmake"

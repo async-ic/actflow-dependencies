@@ -14,9 +14,8 @@
 # limitations under the License.
 #
 
-# deps: trilinos, xyce, metis, parmetis submodule sources | used by: 060-trilinos (gcc16
-# epetraext omp.h + zoltan metis proto), 072-xyce (portable std::abs), 057-parmetis
-# (drop -march=native)
+# deps: trilinos, xyce, metis submodule sources | used by: 060-trilinos (gcc16 epetraext
+# omp.h + zoltan metis proto), 072-xyce (portable std::abs), 057-metis (drop -march=native)
 
 # applies local source patches from extra/ needed to build the pinned submodule
 # versions with the gcc16 toolchain. the sentinel skips re-applying on resume,
@@ -37,12 +36,9 @@ then
    (cd src/org-llvm-llvm-project-14;
      patch -p0 < ../../extra/org-llvm-llvm-project-libcxx-darwin-math-macros.patch;
    ) || exit 1
-   echo "Applying metis/parmetis -march=native removal patches"
+   echo "Applying metis -march=native removal patch"
    (cd src/umn-karypislab-metis;
      patch -p0 < ../../extra/umn-karypislab-metis-gkbuild-no-march-native.patch;
-   ) || exit 1
-   (cd src/umn-karypislab-parmetis;
-     patch -p0 < ../../extra/umn-karypislab-parmetis-gkbuild-no-march-native.patch;
    ) || exit 1
    touch patched_dependencies_v5
 fi

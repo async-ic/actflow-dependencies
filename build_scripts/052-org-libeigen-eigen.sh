@@ -16,12 +16,13 @@
 
 # deps: 005-cmake, 050-fftw | used by: 060-trilinos (EIGEN3_ROOT)
 
+# Note CI resorces: heavy c++ TUs (eigen lapack) peak ~2GB per make job, 
+# EIGEN_BUILD_BLAS/LAPACK - nothing links these extra libs, and the lapack half needs a
+# fortran compiler macOS does not have
+
 echo "#############################"
 echo "# eigen"
 
-# eigen's bundled LAPACK needs a Fortran compiler, which macOS does not have under the
-# "ship only what we compiled" rule; it also links brew's libgfortran when one is present.
-EIGEN_LAPACK="-D EIGEN_BUILD_LAPACK=OFF"
 
 cd $EDA_SRC/org-libeigen-eigen
 cp COPYING.README $ACT_HOME/license/LICENSE_org-libeigen-eigen
@@ -40,7 +41,8 @@ cmake \
 -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
 -D CMAKE_BUILD_TYPE=Release \
 -D FFTW_LIBRARIES=$ACT_HOME/lib \
-${EIGEN_LAPACK} \
+-D EIGEN_BUILD_BLAS=OFF \
+-D EIGEN_BUILD_LAPACK=OFF \
 .. || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1

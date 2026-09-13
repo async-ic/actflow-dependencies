@@ -17,22 +17,12 @@
 #       Galois/Dali/TritonRoute-WXL/act/interact/fpga_proto
 
 # macOS only. The linux variants get their OpenMP runtime as libgomp from the gcc built
-# in 007; macOS has no gcc and the system clang ships no OpenMP runtime at all, so build
-# LLVM's libomp into ACT_HOME. It is the only compiler runtime the macOS package ships -
+# in 007; build LLVM's libomp into ACT_HOME. 
 # libc++ and the Accelerate framework come from the base system and are never
 # redistributed.
 #
-# The runtime has to track the compiler, not fluid's pin. clang emits
-# __kmpc_dispatch_deinit for dynamic-schedule loops (Kokkos::Schedule<Kokkos::Dynamic>,
-# reached through trilinos/amesos2), and that entry point only exists in the runtime from
-# LLVM 19 on. The 14.0.6 runtime builds fine and passes a simple parallel-for, then fails
-# to link xyce - hence the explicit symbol check at the end of this script.
-#
-# So llvm is carried as two submodules: org-llvm-llvm-project on the current release
-# branch for this runtime, and org-llvm-llvm-project-14 pinned at llvmorg-14.0.6, which
-# 105 needs because fluid does not build against anything newer. Both are fetched shallow,
-# so only the checked-out commit is available - the sources have to come from the
-# submodule itself, not from another tag in the same clone.
+# llvm is carried as two submodules: org-llvm-llvm-project on the current release
+# branch for this runtime, and org-llvm-llvm-project-14 pinned at llvmorg-14.0.6 for fluid.
 
 if [ "$(uname -s)" != "Darwin" ]; then
 	echo "skip libomp: linux uses libgomp from the gcc built in 007"
@@ -48,9 +38,6 @@ cp $LLVM_SRC/llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-openmp || exit 
 
 mkdir -p $LLVM_SRC/build-openmp
 cd $LLVM_SRC/build-openmp || exit 1
-# configure through runtimes/, not openmp/: llvm removed the legacy standalone openmp
-# build ("The legacy standalone build mode has been removed"). Only the openmp runtime is
-# enabled, nothing else of llvm is built.
 cmake \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
 -D CMAKE_BUILD_TYPE=Release \

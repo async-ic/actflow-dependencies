@@ -16,10 +16,7 @@
 
 # deps: 002 license dir; host gcc (pre-007) | used by: 006-bison, 072-xyce (find_package FLEX>=2.6)
 
-# builds flex into $ACT_HOME (first on PATH) so cmake's find_package(FLEX) uses it
-# - xyce 7.10 needs flex >=2.6, the centos7 host ships 2.5.37. built before gcc16
-# with the host compiler (old C tripped by gcc16 C23 defaults) and build-only, so
-# 021 trims it. git checkout ships no configure: ./autogen.sh generates it.
+# builds flex into $ACT_HOME (first on PATH) so cmake's find_package(FLEX) uses it. git checkout ships no configure: ./autogen.sh generates it.
 
 echo
 echo "#### flex ####"
@@ -27,6 +24,8 @@ echo
 cd $EDA_SRC/org-westes-flex
 cp COPYING $ACT_HOME/license/LICENSE_org-westes-flex
 ./autogen.sh || exit 1
-./configure --prefix=$ACT_HOME || exit 1
+# --disable-libfl: the flex binary generates the parsers, its runtime library has no
+# consumer
+./configure --prefix=$ACT_HOME --disable-libfl || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1

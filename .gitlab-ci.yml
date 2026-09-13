@@ -153,8 +153,8 @@ build:armv8.5-a:
     PKG_ARCH: armv8.5-a
     BUILD_IMAGE: ${TART_IMAGES}/rocky:9
     GIT_SUBMODULE_STRATEGY: none
-    # heavy c++ TUs (eigen lapack) peak ~2GB per job
-    MAKE_JOBS: "3"
+    # heavy gcc peak ~1.5GB per make job
+    MAKE_JOBS: "4"
 
 # macOS: no package manager beyond brew and no container runtime, so the build image is
 # a tart VM carrying Xcode. Built on sequoia, the older of the two xcode images, for the

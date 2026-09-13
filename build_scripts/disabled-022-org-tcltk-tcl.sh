@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+# DISABLED: orphaned, its only consumers (magic, irsim, tk) are also disabled; nothing
+# but tclsh itself linked libtcl.
+
 # deps: 010-zlib | used by: downstream magic/irsim (runtime)
 
 # tcl appends its script library (zipfs) to libtcl*.dylib. That leaves data past the

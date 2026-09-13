@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+# DISABLED: nothing links it - act's interactive tools (actsim, interact, prsim) link
+# libedit, and expropt builds abc with ABC_USE_NO_READLINE=1.
+
 # deps: 010-ncurses | used by: downstream ACT interactive tools (runtime)
 
 echo "#############################"

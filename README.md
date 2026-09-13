@@ -45,10 +45,8 @@ it is only covered by the v2 list above
 - fedora latest # rolling
 
 **applem1:**
-built on the mirrored macos-sequoia-xcode tart VM image, deployment target 12.0. Tested
-on the vanilla (no Xcode, no developer tools) tart images, which is also what proves the
-package needs nothing but the base system
-- macOS 12 Monterey (the deployment target floor) / 13 Ventura / 14 Sonoma
+built with deployment target MacOS 12.0. Tested on:
+- macOS 12 Monterey / 13 Ventura / 14 Sonoma
 - macOS 15 Sequoia / 26 Tahoe / 27 Golden Gate
 
 **armv8.5-a:**
@@ -104,7 +102,8 @@ the scripts in packaging actually run the top level sripts for you
 - `packaging` contains the scripts for CI and packaging
 - `build_scripts` contains all the build scripts for the dependencies (scripts prefixed `disabled-` are kept for
   reference but are not run - see the comment at the top of each for why, e.g. `abc`/`yosys`/`magic`/`irsim`/`tk`
-  were removed as unneeded)
+  and their orphaned `tcl`, plus `readline`/`libffi`/`fmt`, were removed as unneeded; their submodules are
+  commented out in `.gitmodules`)
 
 # CI
 

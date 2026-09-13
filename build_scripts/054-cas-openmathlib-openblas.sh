@@ -16,21 +16,15 @@
 
 # deps: 007-gcc | used by: 060-trilinos (BLAS/LAPACK); provides libblas/liblapack symlinks
 
-# macOS has no Fortran compiler available under the "ship only what we compiled" rule
-# (gcc has no aarch64-darwin target), and OpenBLAS's LAPACK half is Fortran. The base
+# macOS has no Fortran compiler, the base
 # system's Accelerate framework provides the same Fortran-ABI BLAS+LAPACK and ships with
 # every macOS release.
 #
 # Accelerate cannot be handed to consumers as a library, though: cmake treats
-# "-framework Accelerate" as a library list and renders it -lAccelerate, and tribits
-# rejects the framework path outright ("not a valid lib file name") because it is neither
-# lib<name>.<ext> nor a bare name. Frameworks also have no file on disk to link against,
-# they live in the dyld shared cache.
+# "-framework Accelerate" as a library list and renders it -lAccelerate -> 
 #
-# So build the libblas/liblapack this tree expects as shims that re-export the framework.
-# Consumers then link -lblas/-llapack exactly as on linux and need no macOS-specific
-# flags. Only the shim is shipped - Apple's code is not redistributed, the shim just
-# records a load path into /System, which every macOS release provides.
+# Build the libblas/liblapack this tree expects as shims.
+# Only the shim is shipped - Apple's code is not redistributed.
 if [ "$(uname -s)" = "Darwin" ]; then
 	echo "#############################"
 	echo "# BLAS/LAPACK (Accelerate re-export shims)"

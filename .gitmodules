@@ -30,14 +30,16 @@
 	path = src/org-debian-libedit
 	url = https://salsa.debian.org/debian/libedit.git
 	shallow = true
-[submodule "src/org-tcltk-tcl"]
-	path = src/org-tcltk-tcl
-	url = https://github.com/tcltk/tcl.git
-	shallow = true
-[submodule "src/org-libffi-libffi"]
-	path = src/org-libffi-libffi
-	url = https://github.com/libffi/libffi.git
-	shallow = true
+# tcl disabled: only magic/irsim/tk used it and those are disabled - see build_scripts/disabled-022
+#[submodule "src/org-tcltk-tcl"]
+#	path = src/org-tcltk-tcl
+#	url = https://github.com/tcltk/tcl.git
+#	shallow = true
+# libffi disabled: no consumer - see build_scripts/disabled-022
+#[submodule "src/org-libffi-libffi"]
+#	path = src/org-libffi-libffi
+#	url = https://github.com/libffi/libffi.git
+#	shallow = true
 [submodule "src/org-boostorg-boost"]
 	path = src/org-boostorg-boost
 	url = https://github.com/boostorg/boost.git
@@ -46,18 +48,20 @@
 	path = src/org-numactl-numactl
 	url = https://github.com/numactl/numactl.git
 	shallow = true
-[submodule "src/org-fmtlib-fmt"]
-	path = src/org-fmtlib-fmt
-	url = https://github.com/fmtlib/fmt.git
-	shallow = true
+# fmt disabled: no consumer - see build_scripts/disabled-046
+#[submodule "src/org-fmtlib-fmt"]
+#	path = src/org-fmtlib-fmt
+#	url = https://github.com/fmtlib/fmt.git
+#	shallow = true
 [submodule "src/org-libeigen-eigen"]
 	path = src/org-libeigen-eigen
 	url = https://gitlab.com/libeigen/eigen.git
 	shallow = true
-[submodule "src/org-gnu-readline"]
-	path = src/org-gnu-readline
-	url = https://git.savannah.gnu.org/git/readline.git
-	shallow = true
+# readline disabled: nothing links it, act uses libedit - see build_scripts/disabled-020
+#[submodule "src/org-gnu-readline"]
+#	path = src/org-gnu-readline
+#	url = https://git.savannah.gnu.org/git/readline.git
+#	shallow = true
 [submodule "src/org-debian-fftw3"]
 	path = src/org-debian-fftw3
 	url = https://salsa.debian.org/science-team/fftw3.git
@@ -82,10 +86,11 @@
 	path = src/lbl-xiaoyeli-superlu
 	url = https://github.com/xiaoyeli/superlu.git
  	shallow = true
-[submodule "src/umn-karypislab-parmetis"]
-	path = src/umn-karypislab-parmetis
-	url = https://github.com/karypislab/parmetis.git
- 	shallow = true
+# parmetis disabled: unused by trilinos/xyce, see build_scripts/057
+#[submodule "src/umn-karypislab-parmetis"]
+#	path = src/umn-karypislab-parmetis
+#	url = https://github.com/karypislab/parmetis.git
+# 	shallow = true
 [submodule "src/umn-karypislab-gklib"]
 	path = src/umn-karypislab-gklib
 	url = https://github.com/KarypisLab/GKlib.git

@@ -21,8 +21,8 @@ source packaging/relocate.sh
 echo "#############################"
 echo "# xyce"
 
-# macOS: no Fortran compiler (see 007). BLAS/LAPACK come from the libblas/liblapack
-# Accelerate shims 054 builds and need no flags here. Trilinos installs static libraries,
+# macOS: no Fortran compiler. BLAS/LAPACK come from the libblas/liblapack
+# Accelerate shims 054 builds. Trilinos installs static libraries,
 # so they do not record the OpenMP runtime they were built against - xyce must link it.
 XYCE_FORTRAN="-D CMAKE_Fortran_COMPILER=mpif90"
 XYCE_LINK_EXTRA=""

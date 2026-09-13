@@ -1,10 +1,9 @@
 #!/bin/bash
 #
-# Builds LLVM into the isolated sub-prefix $ACT_HOME/llvm. Disabled by default;
+# Builds LLVM 14 into the isolated sub-prefix $ACT_HOME/llvm. Disabled by default;
 # required only for the fluid testing package (fluid/CMakeLists.txt:
 # find_package(LLVM REQUIRED CONFIG)).
 #
-# Findings (empirically verified, building the real fluid tree):
 # - fluid links NO LLVM lib: libfluid.so is an `opt -load` pass plugin, and its
 #   declared components (support/core/irreader) are computed but never linked;
 #   the build needs only LLVM headers + LLVMConfig.cmake. opt + clang are built
@@ -57,9 +56,7 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   fi
   cd $EDA_SRC/org-llvm-llvm-project-14/build || exit 1
   export LD_LIBRARY_PATH=$ACT_HOME/lib
-  # macOS has no usable equivalent: DYLD_LIBRARY_PATH overrides lookups by leaf name even
-  # for absolute paths, so exporting it makes cmake load the bundle's libz.1.dylib in place
-  # of the /usr/lib one it was built against, and cmake segfaults. Give the build-time
+  # macOS has no usable equivalent: DYLD_LIBRARY_PATH overrides lookups. Give the build-time
   # tools an rpath into the bundle instead; relocate_tree rewrites the installed copies.
   LLVM_RPATH=""
   [ "$(uname -s)" = "Darwin" ] && LLVM_RPATH=" -Wl,-rpath,${ACT_HOME}/lib"

@@ -17,7 +17,7 @@
 
 # snapshot of $ACT_HOME before xyce: adds files installed since
 # 021-list_build_files.sh, except shared objects (*$SOEXT), binaries
-# (bin/, e.g. tclsh, mpirun - may be needed at runtime by now), license files
+# (bin/, e.g. mpirun - may be needed at runtime by now), license files
 # and entries already recorded. Together with 021, this is the full set of
 # build-only files that can be stripped for a slimmed runtime-only package.
 
@@ -25,6 +25,6 @@ echo "#############################"
 echo "# list new build-only files ($ACT_HOME, except *${SOEXT}, bin/ and license)"
 
 cd $ACT_HOME
-find . -type f ! -path "./bin/*" ! -name "*${SOEXT}" ! -name "*${SOEXT}.*" ! -path "./lib/tcl*" ! -path "./license/*" ! -path "./share/info/*" ! -path "./share/terminfo/*" ! -path "./share/man/*" ! -name "LICENSE.txt" ! -name "build_only_files.list" \
+find . -type f ! -path "./bin/*" ! -name "*${SOEXT}" ! -name "*${SOEXT}.*" ! -path "./license/*" ! -path "./share/info/*" ! -path "./share/terminfo/*" ! -path "./share/man/*" ! -name "LICENSE.txt" ! -name "build_only_files.list" \
 	| sed 's|^\./||' >> build_only_files.list
 sort -u -o build_only_files.list build_only_files.list

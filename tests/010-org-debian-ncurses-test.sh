@@ -20,6 +20,11 @@ echo "# ncurses test for linking errors"
 
 source tests/test_helper.sh
 
+if [ "$(uname -s)" = "Darwin" ]; then
+	echo "skip ncurses: not built on macOS, libedit links the system /usr/lib/libncurses"
+	exit 0
+fi
+
 lookup_binary "tset"
 lookup_binary "tput"
 lookup_binary "toe"

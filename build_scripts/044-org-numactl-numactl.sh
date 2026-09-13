@@ -16,8 +16,7 @@
 
 # deps: 007-gcc, 003-automake (autogen) | used by: actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
 
-# libnuma is linux-only; its consumers treat it as optional and Galois uses
-# HWTopoDarwin.cpp instead
+# libnuma is linux-only; Galois uses HWTopoDarwin.cpp instead
 if [ "$(uname -s)" = "Darwin" ]; then
 	echo "skip numactl: linux only"
 	exit 0

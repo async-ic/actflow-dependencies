@@ -16,4 +16,4 @@ release tag and may be updated freely.
 
 # repos without tagged releases
 
-metis / gklib / parmetis here we stay on the newest commit on the main branch (release branch)
+metis / gklib here we stay on the newest commit on the main branch (release branch)

@@ -20,18 +20,13 @@ echo
 echo "#### trilinos ####"
 echo
 
-# macOS: no Fortran compiler (see 007), and BLAS/LAPACK come from the base system's
-# Accelerate framework via the libblas/liblapack re-export shims 054 builds, which the
-# default BLAS_LIBRARY_NAMES/LAPACK_LIBRARY_NAMES find unaided.
+# macOS: no Fortran compiler and BLAS/LAPACK come Accelerate framework via shims 054 builds
 TRILINOS_FORTRAN="-D CMAKE_Fortran_COMPILER=mpif90"
 # With Fortran off, aztecoo compiles its f2c-translated C instead (az_c_util.c,
 # az_c_reorder.c). That code predates C99 and calls BLAS and its own helpers without
-# prototypes. Two things have to line up for it to build:
-#   -std=gnu17  mpich bakes -std=gnu23 into the mpicc wrapper, and C23 removed implicit
-#               function declarations outright, so there is no diagnostic left to demote.
-#               This comes after mpicc's own flag and wins.
+# prototypes.
+#   -std=gnu17  mpich bakes -std=gnu23 into the mpicc wrapper but the old code nneds implicit declarations
 #   -Wno-error  clang 16+ raised the C17 diagnostic from warning to error.
-# Both are needed; neither alone compiles. 057 already demotes pointer types the same way.
 TRILINOS_C_COMPAT=""
 [ "$(uname -s)" = "Darwin" ] && TRILINOS_C_COMPAT="-std=gnu17 -Wno-error=implicit-function-declaration"
 TRILINOS_FORTRAN_FLAGS=(-D "CMAKE_Fortran_FLAGS=-O3 -fPIC ${FFLAGS}")
@@ -49,10 +44,10 @@ cp LICENSE $ACT_HOME/license/LICENSE_sandia-trilinos-trilinos
 cat Copyright.txt >> $ACT_HOME/license/LICENSE_sandia-trilinos-trilinos
 cd $EDA_SRC/sandia-trilinos-trilinos/build
 
-# set the MPI wrappers explicitly (don't rely on PATH auto-detect); Trilinos builds
+# set the MPI wrappers explicitly; Trilinos builds
 # with them and exports no explicit MPI lib, so consumers (xyce 072) must match.
 # METIS_LIBRARY_NAMES lists GKlib too: static libmetis.a needs it for gk_* symbols,
-# else xyce's exe link fails undefined (order matters: metis before GKlib).
+# else xyce's exe link fails undefined (order matters).
 cmake \
 -G "Unix Makefiles" \
 -D CMAKE_C_COMPILER=mpicc \

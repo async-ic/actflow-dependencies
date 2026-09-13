@@ -18,23 +18,26 @@ this is the summary.
 ## 1. act-actflow-dependencies
 
 Toolchain (to `$ACT_HOME/bin`, on PATH; 002/003/004/006 build-only):
-- 002 autoconf → 003, 006 · 003 automake → 006, 022-libffi, 030, 044
+- 002 autoconf → 003, 006 · 003 automake → 006, 030, 044
 - 004 flex → 006, 072 · 005 cmake → all cmake builds · 006 bison → 072
 - 007 gcc16 → everything after
 
 Libraries (built with gcc16):
-- 010 ncurses → 012, 020 · 010 zlib → 022-tcl, 042
+- 010 ncurses → 012 · 010 zlib → 042
 - 030 mpich → 042, 057, 060, 072
 - 050 fftw → 060, 072 · 052 eigen → 060 · 054 openblas → 060 (BLAS/LAPACK) · 056 AMD → 060
 - 057 metis → 060 (ShyLU-Basker)
 - 060 trilinos → 072 · 072 xyce → actsim
 - 044 numactl → actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
-- runtime/downstream only: 012 libedit, 020 readline, 022 libffi/tcl, 042 boost, 046 fmt
+- runtime/downstream only: 012 libedit, 042 boost
 
 Notes: 048 superlu + 058 superlu_dist disabled (unused; Xyce comments them out). 057
-metis feeds trilinos ShyLU-Basker (TPL_ENABLE_METIS); its parmetis/gklib build but are
-unused. 060 matches Xyce's recommended config (MueLu off, COMPLEX_DOUBLE). boost/fmt
-are downstream-only. Trilinos exports no MPI lib, so 060/072 build with `mpicc/mpicxx/mpif90`.
+metis+gklib feed trilinos ShyLU-Basker (METIS_LIBRARY_NAMES="metis;GKlib"); its parmetis
+is disabled (no ParMETIS TPL, absent from the xyce.in link line actsim uses), see 057 and
+.gitmodules. 060 matches Xyce's recommended config (MueLu off, COMPLEX_DOUBLE). boost is
+downstream-only (interact). 020 readline, 022 libffi/tcl and 046 fmt are disabled: nothing
+links or detects them - act's interactive tools use libedit, tcl's consumers (magic/irsim/tk)
+are disabled. Trilinos exports no MPI lib, so 060/072 build with `mpicc/mpicxx/mpif90`.
 
 ## 2. yale-asyncvlsi-actflow (order from `./build`)
 
@@ -47,5 +50,6 @@ fpga_proto/xcell/dflow2dot/sky130l/utils → actsim(xyce)
 
 ## 3. Bridge (deps package → flow)
 
-gcc16 + cmake → all · xyce → actsim · readline/libedit/tcl → interact ·
-mpich/boost/fmt → various
+gcc16 + cmake → all · xyce → actsim · libedit → actsim/interact/prsim ·
+boost → interact (filesystem, iostreams, log, log_setup, serialization, thread) ·
+mpich/metis/amd/fftw/openblas → trilinos + xyce (static, via `include/xyce.in`)

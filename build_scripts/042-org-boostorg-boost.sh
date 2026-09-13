@@ -25,16 +25,19 @@ cp LICENSE_1_0.txt $ACT_HOME/license/LICENSE_org-boostorg-boost
 echo "using mpi ;" >> user-config.jam
 # build a static b2: bootstrap's b2 gets no rpath, so a shared libstdc++ isn't
 # found at runtime. static makes b2 self-contained; boost libs still link shared.
-# macOS needs neither: libc++ lives in /usr/lib and is always present, and clang
-# rejects -static-libgcc outright.
 if [ "$(uname -s)" = "Darwin" ]; then
 	( cd tools/build/src/engine && ./build.sh clang ) || exit 1
 else
 	( cd tools/build/src/engine && ./build.sh gcc --cxxflags="-static-libstdc++ -static-libgcc" ) || exit 1
 fi
 cp tools/build/src/engine/b2 ./b2
-./bootstrap.sh --with-bjam="$(pwd)/b2" --prefix=$ACT_HOME --without-libraries=python || exit 1
+# only build the compiled libraries needed. interact links
+# filesystem, log, log_setup and thread; Galois/Dali/phyDB require serialization and
+# iostreams through find_package(Boost COMPONENTS ...) and Dali links Boost::iostreams;
+# the rest of the list is what b2 pulls in transitively.
+BOOST_LIBS=atomic,chrono,container,date_time,filesystem,iostreams,log,serialization,thread
+./bootstrap.sh --with-bjam="$(pwd)/b2" --prefix=$ACT_HOME --with-libraries=$BOOST_LIBS || exit 1
 echo "using mpi ;" >> project-config.jam
 echo "## building ##"
-# lzma compression is disabled in iostreams because the ABI symbol patch of lzma is not functioning and was to much work to debug
+# lzma compression is disabled in iostreams because the ABI symbol patch of lzma is not functioning
 ./b2 -j2 -s NO_LZMA=1 -s NO_BZIP2=1  install || exit 1
