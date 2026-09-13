@@ -1,13 +1,18 @@
 # actflow-dependencies
 all dependencies required by actflow https://github.com/asyncvlsi/actflow
 
-Built with MPI enabled from the **main** branch, in 4 portable variants
-that only depend on libc and work with any linux/gnu OS with kernel version newer than:
+Built with MPI enabled from the **main** branch, in 5 portable variants.
+The four linux ones only depend on libc and work with any linux/gnu OS with kernel
+version newer than:
 
 - **x86-64-v2** kernel version 3.10 or higher 
 - **x86-64-v3** kernel version 5.14 or higher
 - **x86-64-v4** kernel version 5.14 or higher
 - **armv8.5-a** (aarch64) kernel version 5.14 or higher
+
+the macOS one only depends on the base system (`/usr/lib`, `/System`):
+
+- **applem1** (arm64, Apple silicon) macOS 12.0 Monterey or higher
 
 [![pipeline status](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/badges/main/pipeline.svg)](https://lab.compute.dtu.dk/async-ic/eda/act-actflow-dependencies/-/pipelines)
 
@@ -39,6 +44,13 @@ it is only covered by the v2 list above
 - archlinux latest # rolling
 - fedora latest # rolling
 
+**applem1:**
+built on the mirrored macos-sequoia-xcode tart VM image, deployment target 12.0. Tested
+on the vanilla (no Xcode, no developer tools) tart images, which is also what proves the
+package needs nothing but the base system
+- macOS 12 Monterey (the deployment target floor) / 13 Ventura / 14 Sonoma
+- macOS 15 Sequoia / 26 Tahoe / 27 Golden Gate
+
 **armv8.5-a:**
 tested on the mirrored arm64 tart VM images only, glibc 2.34 (rocky 9) is the floor
 - RHEL 9 (or derivats RockyLinux, AlmaLinux, ...) # kernel 5.14
@@ -54,13 +66,20 @@ if you build on an older OS your package is compatible with more target platform
 you need gcc 11+, m4, make, autoconf, automake, bison, flex, libtool, python3, csh, patch, texinfo
 (see `packaging/el7_install_build_system.sh` for centos7/v2, `packaging/el9_install_build_system.sh` for alma9/v3+v4 and rocky9/armv8.5-a)
 
+on macOS you need Xcode and the brew formulae in `packaging/macos_install_build_system.sh`;
+gcc is bootstrapped into `$ACT_HOME` there as well, against the Xcode SDK
+
 ## environment variables
 
 `$ACT_HOME` is pointing to the install path
 `$EDA_SRC` is pointing to the folder containing the sources
 `$ARCH_LEVEL` selects the microarchitecture level to build for (`x86-64-v2`/`v3`/`v4`, `armv8.5-a`), injected into `CFLAGS`/`CXXFLAGS`/`FFLAGS`/`FCFLAGS`
+`$PKG_ARCH` is the package/release name token, `$ARCH_LEVEL` on linux and `applem1` on macOS
+(whose `ARCH_LEVEL` is `armv8.5-a` too and would collide)
+`$SOEXT` is the shared object suffix the dependency build systems emit, `.so` or `.dylib`
 
 on centos7 run `source packaging/el7_ci_build_environment.sh`, on alma9/rocky9 run `source packaging/el9_ci_build_environment.sh`,
+on macOS run `source packaging/macos_ci_build_environment.sh`,
 from the repository root to get them set up with act home in `/opt/act`.
 
 ## run the steps for building local
@@ -89,7 +108,12 @@ the scripts in packaging actually run the top level sripts for you
 
 # CI
 
-Builds on GitLab CI (`.gitlab-ci.yml`): each of the 3 variants builds and packages in its own job, then gets
+Builds on GitLab CI (`.gitlab-ci.yml`): each variant builds and packages in its own job, then gets
 tested against a matrix of clean-OS containers (rhel8, debian, ubuntu, opensuse, archlinux, fedora, ...) to
-verify it only depends on libc. Releases (source + all 3 packaged tarballs) are published as GitLab Releases
+verify it only depends on libc. Releases (source + all packaged tarballs) are published as GitLab Releases
 on `main`.
+
+The macOS variant differs in where its checks run: the vanilla test images carry no developer
+tools at all (`git`, `make`, `otool` and `clang` are xcode-select shims there), so the mach-o
+link and relocation checks run in `build:applem1`, and the test matrix launches the shipped
+binaries and asserts against what dyld actually loaded.

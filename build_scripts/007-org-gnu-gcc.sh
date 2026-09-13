@@ -22,6 +22,17 @@
 # compiler + runtime (libstdc++/libgcc_s/libgfortran/libgomp, plus libquadmath on
 # x86 - gcc has no __float128 on aarch64, so none is built there).
 
+source packaging/relocate.sh
+
+# gcc has no aarch64-*-darwin* target: gcc/config.gcc lists only i386/x86_64/powerpc
+# darwin, so gcc/configure aborts with "Configuration aarch64-apple-darwin not supported".
+# macOS builds with the system clang instead; 008-org-llvm-openmp.sh supplies the OpenMP
+# runtime that libgomp provides here, and Accelerate the BLAS/LAPACK that needs Fortran.
+if [ "$(uname -s)" = "Darwin" ]; then
+	echo "skip gcc: no aarch64-darwin target upstream, macOS builds with the system clang"
+	exit 0
+fi
+
 echo
 echo "#### build a fully bootstrapped gcc 16, installed into ACT_HOME ####"
 echo
@@ -93,16 +104,12 @@ if [ -d $ACT_HOME/lib64 ]; then
 	rmdir $ACT_HOME/lib64
 	# repoint moved .la files off the old lib64 path (else libtool links against
 	# libgfortran/libquadmath break).
-	sed -i 's|/lib/\.\./lib64|/lib|g' $ACT_HOME/lib/*.la
+	sed_i 's|/lib/\.\./lib64|/lib|g' $ACT_HOME/lib/*.la
 fi
 
-# patch the real rpath over the placeholder on every ELF; relative depth to lib/ varies by
-# location, so it's computed per file. Must run here (not the final build-wide patchelf
-# pass): gcc is the compiler for 010-072, so it needs its runtime libs before those run.
-find $ACT_HOME -type f -print0 | while IFS= read -r -d '' f; do
-	head -c4 "$f" 2>/dev/null | grep -q ELF || continue
-	patchelf --set-rpath "\$ORIGIN/$(realpath --relative-to="$(dirname "$f")" "$ACT_HOME/lib")" "$f" 2>/dev/null || true
-done
+# portable-install pass. Must run here (not only the final build-wide one): gcc is the
+# compiler for 010-072, so it needs its runtime libs resolvable before those run.
+relocate_tree "$ACT_HOME"
 
 # libbacktrace isn't installed by gcc's own "make install" (an internal helper
 # lib, not a public target library) - build it standalone, using the gcc we
@@ -112,6 +119,6 @@ echo "#### build libbacktrace ####"
 echo
 
 cd $EDA_SRC/org-gnu-gcc/libbacktrace
-./configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
+./configure --prefix=$ACT_HOME --with-pic --disable-multilib CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
 make || exit 1
 make install || exit 1

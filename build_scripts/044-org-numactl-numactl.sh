@@ -16,11 +16,18 @@
 
 # deps: 007-gcc, 003-automake (autogen) | used by: actflow Galois/BiPart/PWRoute/SPRoute (libnuma)
 
+# libnuma is linux-only; its consumers treat it as optional and Galois uses
+# HWTopoDarwin.cpp instead
+if [ "$(uname -s)" = "Darwin" ]; then
+	echo "skip numactl: linux only"
+	exit 0
+fi
+
 echo "#############################"
 echo "# numactl"
 cd $EDA_SRC/org-numactl-numactl
 ./autogen.sh || exit 1
-./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
+./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include -I$ACT_HOME/include/ncurses ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1
 cp LICENSE.GPL2 $ACT_HOME/license/LICENSE_org-numactl-numactl

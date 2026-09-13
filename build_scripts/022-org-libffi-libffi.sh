@@ -16,16 +16,19 @@
 
 # deps: 007-gcc, 003-automake (autogen) | used by: downstream (FFI, runtime)
 
+source packaging/relocate.sh
+
 echo "#############################"
 echo "# libffi"
 cd $EDA_SRC/org-libffi-libffi
 cp LICENSE $ACT_HOME/license/LICENSE_org-libffi-libffi
 ./autogen.sh || exit 1
-./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
-sed -i 's/\/..\/lib64//' Makefile
-# libffi builds in a host-triple subdir (x86_64-*-linux-gnu, aarch64-*-linux-gnu)
-cd *-linux-gnu*
-sed -i 's/\/..\/lib64//' Makefile
-cd $EDA_SRC/org-libffi-libffi
+./configure --prefix=$ACT_HOME CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
+sed_i 's/\/..\/lib64//' Makefile
+# libffi builds in a host-triple subdir: x86_64-*-linux-gnu / aarch64-*-linux-gnu on
+# linux, aarch64-apple-darwin* on macOS (which has no lib64, so the fixup is a no-op)
+for hostdir in *-linux-gnu* *-apple-darwin*; do
+	[ -d "$hostdir" ] && sed_i 's/\/..\/lib64//' "$hostdir/Makefile"
+done
 make -j$MAKE_JOBS || exit 1
 make install || exit 1

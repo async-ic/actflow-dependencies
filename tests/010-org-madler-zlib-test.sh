@@ -20,4 +20,4 @@ echo "# zlib test for linking errors"
 
 source tests/test_helper.sh
 
-lookup_shared_library "libz.so"
+lookup_shared_library "libz${SOEXT}"

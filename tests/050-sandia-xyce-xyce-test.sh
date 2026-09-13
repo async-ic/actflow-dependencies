@@ -22,7 +22,7 @@ source tests/test_helper.sh
 
 lookup_binary "Xyce"
 
-if [ ! -f ${ACT_HOME}/lib/libxycecinterface.so ]; then
+if [ ! -f ${ACT_HOME}/lib/libxycecinterface${SOEXT} ]; then
    echo "lib XyceCInterface missing"
    exit 1
 fi

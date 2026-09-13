@@ -32,6 +32,14 @@ if [ -z $ABI_LEVEL ]; then
 fi
 echo "ABI_LEVEL $ABI_LEVEL"
 
+# package/release name token and the shared library suffix; the macos variant
+# (packaging/macos_ci_build_environment.sh) overrides both
+if [ -z $PKG_ARCH ]; then
+    export PKG_ARCH=$ARCH_LEVEL
+fi
+echo "PKG_ARCH $PKG_ARCH"
+export SOEXT=.so
+
 # guard: re-sourcing runs twice per job, don't stack flags (PATH handled above)
 if [ -z $ACTFLOW_ENV_LOADED ]; then
     # explicit -O3/-fPIC: CFLAGS overrides each tool's own default optimization/PIC flags

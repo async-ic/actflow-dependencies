@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Ole Richter - Technical University of Denmark
+#
+# std::abs<double>(x) is not portable. libstdc++ happens to provide a function template
+# that an explicit <double> can bind to, so this compiles with gcc; libc++ declares the
+# arithmetic abs overloads as plain non-template functions, and the explicit template
+# argument leaves the call ambiguous:
+#   N_LAS_BlockSystemHelpers.C:818: error: call to 'abs' is ambiguous
+#
+# std::abs(val) already selects the double overload by argument type, so dropping the
+# explicit template argument is correct on both standard libraries and changes nothing
+# for the linux builds.
+#
+# macOS needs this because it has only libc++ - there is no libstdc++ to fall back to.
+--- src/LinearAlgebraServicesPKG/N_LAS_BlockSystemHelpers.C
++++ src/LinearAlgebraServicesPKG/N_LAS_BlockSystemHelpers.C
+@@ -815,8 +815,8 @@
+       Vector& timeVecRef = xt.block(i);
+       double val = timeVecRef[j];
+       (*inputSignal)[i] = val;
+-      if (std::abs<double>(val) > norm1)
+-        norm1 = std::abs<double>(val);
++      if (std::abs(val) > norm1)
++        norm1 = std::abs(val);
+     }
+ 
+     // Calculate the DFT for the inputSignal.

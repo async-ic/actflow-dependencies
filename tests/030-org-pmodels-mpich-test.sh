@@ -24,6 +24,11 @@ source tests/test_helper.sh
 lookup_binary "mpiexec.hydra"
 lookup_binary "mpichversion"
 
-lookup_shared_library "libmpi.so"
-lookup_shared_library "libmpicxx.so"
-lookup_shared_library "libmpifort.so"
+lookup_shared_library "libmpi${SOEXT}"
+lookup_shared_library "libmpicxx${SOEXT}"
+# mpich is configured --disable-fortran on macOS (no Fortran compiler, see 007/030)
+if [ "$(uname -s)" != "Darwin" ]; then
+	lookup_shared_library "libmpifort${SOEXT}"
+else
+	echo "skip libmpifort${SOEXT}: mpich builds without fortran on macOS"
+fi

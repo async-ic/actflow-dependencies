@@ -20,7 +20,13 @@ echo "# libnumactl test for linking errors"
 
 source tests/test_helper.sh
 
-lookup_shared_library "libnuma.so"
+# libnuma is linux-only, build_scripts/044 does not build it on darwin
+if [ "$(uname -s)" = "Darwin" ]; then
+	echo "skip numactl: linux only"
+	exit 0
+fi
+
+lookup_shared_library "libnuma${SOEXT}"
 
 lookup_binary "numactl"
 lookup_binary "numastat"

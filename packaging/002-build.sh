@@ -2,12 +2,11 @@
 
 if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
+source packaging/relocate.sh
+
 bash ./build || exit 1
 
-# final portable-rpath pass: give every ELF under ACT_HOME a clean relative rpath to
-# ACT_HOME/lib. Replaces the per-package LDFLAGS/-Wl,-rpath hacks that mangle $ORIGIN semi sucessfully.
-find "$ACT_HOME" -type f | while read -r f; do
-    head -c4 "$f" 2>/dev/null | grep -q ELF || continue
-    rel=$(realpath --relative-to="$(dirname "$f")" "$ACT_HOME/lib")
-    patchelf --set-rpath "\$ORIGIN/${rel}" "$f" 2>/dev/null
-done
+# final portable-install pass over ACT_HOME. Replaces the per-package LDFLAGS/-Wl,-rpath
+# hacks that mangle $ORIGIN semi sucessfully.
+relocate_tree "$ACT_HOME"
+assert_portable_install "$ACT_HOME" || exit 1

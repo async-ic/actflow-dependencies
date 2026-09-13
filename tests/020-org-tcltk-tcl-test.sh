@@ -22,4 +22,4 @@ source tests/test_helper.sh
 
 lookup_binary "tclsh"
 
-lookup_shared_library "libtcl9.0.so"
+lookup_shared_library "libtcl9.0${SOEXT}"

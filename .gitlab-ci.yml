@@ -4,6 +4,9 @@
 #   x86-64-v3 : AlmaLinux 9 -> ABI 5.14
 #   x86-64-v4 : AlmaLinux 9 -> ABI 5.14
 #   armv8.5-a : Rocky 9 -> ABI 5.14    (aarch64, tart VM runners)
+#   applem1   : macOS sequoia -> deployment target 12.0 (arm64, tart VM runners)
+# PKG_ARCH is the package/release name token: it equals ARCH_LEVEL on linux, and is
+# "applem1" on macOS, whose ARCH_LEVEL (armv8.5-a) would otherwise collide with aarch64.
 
 # a YYYY-MM-DD_hash tag is auto-created by the release job for an already-published
 # release; its tag pipeline would only rebuild and re-release what already exists.
@@ -67,8 +70,8 @@ prepare:sources:
     - bash packaging/004-build_testing.sh
     - bash packaging/005-pack_binaries_testing.sh
     # push the binaries to the registry (no job artifact); release just links to them
-    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
-    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_testing_package_${ARCH_LEVEL}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${PKG_ARCH}_*.tar.gz)" "actflow_dependencies_package_${PKG_ARCH}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${PKG_ARCH}_*.tar.gz)" "actflow_dependencies_testing_package_${PKG_ARCH}.tar.gz"
   # per-build logs kept off the truncated console; upload on failure too so builds stay diagnosable
   artifacts:
     when: always
@@ -91,8 +94,8 @@ prepare:sources:
     - bash packaging/004-build_testing.sh
     - bash packaging/005-pack_binaries_testing.sh
     # push the binaries to the registry (no job artifact); release just links to them
-    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
-    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${ARCH_LEVEL}_*.tar.gz)" "actflow_dependencies_testing_package_${ARCH_LEVEL}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${PKG_ARCH}_*.tar.gz)" "actflow_dependencies_package_${PKG_ARCH}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${PKG_ARCH}_*.tar.gz)" "actflow_dependencies_testing_package_${PKG_ARCH}.tar.gz"
   # per-build logs kept off the truncated console; upload on failure too so builds stay diagnosable
   artifacts:
     when: always
@@ -110,6 +113,7 @@ build:x86-64-v2:
   tags: [x86-64-v2, container]
   variables:
     ARCH_LEVEL: x86-64-v2
+    PKG_ARCH: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
 
 build:x86-64-v3:
@@ -119,6 +123,7 @@ build:x86-64-v3:
   tags: [x86-64-v3, container]
   variables:
     ARCH_LEVEL: x86-64-v3
+    PKG_ARCH: x86-64-v3
     BUILD_IMAGE: almalinux:9
     GIT_SUBMODULE_STRATEGY: none
 
@@ -129,6 +134,7 @@ build:x86-64-v4:
   tags: [x86-64-v4, container]
   variables:
     ARCH_LEVEL: x86-64-v4
+    PKG_ARCH: x86-64-v4
     BUILD_IMAGE: almalinux:9
     GIT_SUBMODULE_STRATEGY: none
 
@@ -144,9 +150,53 @@ build:armv8.5-a:
       - sudo dnf install -y git
   variables:
     ARCH_LEVEL: armv8.5-a
+    PKG_ARCH: armv8.5-a
     BUILD_IMAGE: ${TART_IMAGES}/rocky:9
     GIT_SUBMODULE_STRATEGY: none
     # heavy c++ TUs (eigen lapack) peak ~2GB per job
+    MAKE_JOBS: "3"
+
+# macOS: no package manager beyond brew and no container runtime, so the build image is
+# a tart VM carrying Xcode. Built on sequoia, the older of the two xcode images, for the
+# same reason the v2 variant builds on CentOS 7.
+.build_macos: &build_macos
+  image: $BUILD_IMAGE
+  before_script:
+    - bash packaging/gitlab-registry-transfer.sh down actflow_dependencies_sources.tar.gz actflow_dependencies_sources.tar.gz
+    - tar --exclude-vcs -xzf actflow_dependencies_sources.tar.gz
+  script:
+    - bash packaging/000-check_arch_level.sh
+    - bash packaging/macos_install_build_system.sh
+    - source packaging/macos_ci_build_environment.sh
+    - bash packaging/002-build.sh
+    - bash packaging/003-pack_binaries.sh
+    # mach-o link + relocation checks run here, not in the test stage: the vanilla test
+    # images carry no xcode tools to inspect a binary with. Placed before the testing
+    # build so it checks exactly what the public package contains, and so a failure stops
+    # the job before the long llvm build.
+    - bash packaging/006-test.sh
+    - bash packaging/004-build_testing.sh
+    - bash packaging/005-pack_binaries_testing.sh
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_package_${PKG_ARCH}_*.tar.gz)" "actflow_dependencies_package_${PKG_ARCH}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh up "$(ls actflow_dependencies_testing_package_${PKG_ARCH}_*.tar.gz)" "actflow_dependencies_testing_package_${PKG_ARCH}.tar.gz"
+  artifacts:
+    when: always
+    paths:
+      - logs/
+    expire_in: 1 week
+
+build:applem1:
+  <<: *build_macos
+  stage: build
+  needs: ["prepare:sources"]
+  tags: [applem1, tart]
+  variables:
+    ARCH_LEVEL: armv8.5-a
+    PKG_ARCH: applem1
+    BUILD_IMAGE: ${TART_IMAGES}/macos-sequoia-xcode:latest
+    GIT_SUBMODULE_STRATEGY: none
+    # 4 cpus / 8GB on the runner; the heavy c++ TUs (trilinos, xyce) peak ~2GB each.
+    # No gcc bootstrap here - 007 is skipped on macOS, gcc has no aarch64-darwin target.
     MAKE_JOBS: "3"
 
 # distro portability matrix: each packaged variant tested against target OSes
@@ -156,7 +206,7 @@ build:armv8.5-a:
     # per-image TEST_DEPS_INSTALL_CMD (set in the matrix) provides the download and
     # unpack tools the image lacks: a modern-TLS curl/wget, tar and gzip
     - eval "$TEST_DEPS_INSTALL_CMD"
-    - bash packaging/gitlab-registry-transfer.sh down "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz"
+    - bash packaging/gitlab-registry-transfer.sh down "actflow_dependencies_package_${PKG_ARCH}.tar.gz" "actflow_dependencies_package_${PKG_ARCH}.tar.gz"
   script:
     - bash packaging/000-check_arch_level.sh
     - mkdir install
@@ -171,6 +221,7 @@ test:x86-64-v2:
   tags: [x86-64-v2, container]
   variables:
     ARCH_LEVEL: x86-64-v2
+    PKG_ARCH: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
     TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
   # the oldest release of each distro, proving the compatibility floor, plus the newer
@@ -223,6 +274,7 @@ test:x86-64-v3:
     - when: on_success
   variables:
     ARCH_LEVEL: x86-64-v3
+    PKG_ARCH: x86-64-v3
     GIT_SUBMODULE_STRATEGY: none
     TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
   parallel: *test_matrix_x86_abi_514
@@ -239,6 +291,7 @@ test:x86-64-v4:
     - when: on_success
   variables:
     ARCH_LEVEL: x86-64-v4
+    PKG_ARCH: x86-64-v4
     GIT_SUBMODULE_STRATEGY: none
     TEST_DEPS_INSTALL_CMD: "true" # default no-op for images already carrying a usable curl
   parallel: *test_matrix_x86_abi_514
@@ -257,6 +310,7 @@ test:armv8.5-a:
       - eval "$VM_DEPS_INSTALL_CMD"
   variables:
     ARCH_LEVEL: armv8.5-a
+    PKG_ARCH: armv8.5-a
     GIT_SUBMODULE_STRATEGY: none
     TEST_DEPS_INSTALL_CMD: "true" # tart deps are installed pre-clone instead
     VM_DEPS_INSTALL_CMD: "sudo dnf install -y git binutils" # rpm images, deb images override
@@ -282,6 +336,42 @@ test:armv8.5-a:
       - DISTRO_IMAGE: ${TART_IMAGES}/fedora:38
   image: $DISTRO_IMAGE
 
+# macOS portability matrix. The vanilla images carry no developer tools at all - git,
+# make, otool and clang are xcode-select shims there - so the job cannot be cloned into
+# and cannot inspect a binary. It fetches its own tooling with curl (a real base-OS
+# binary) and the tests fall back to launching the shipped binaries and reading what
+# dyld actually loaded; the structural link checks ran in build:applem1.
+test:applem1:
+  stage: test
+  needs: ["prepare:sources", "build:applem1"]
+  tags: [applem1, tart]
+  image: $DISTRO_IMAGE
+  variables:
+    ARCH_LEVEL: armv8.5-a
+    PKG_ARCH: applem1
+    GIT_STRATEGY: none
+  before_script:
+    - |
+      curl --fail --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" -o tooling.tar.gz \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/archive.tar.gz?sha=${CI_COMMIT_SHA}"
+      mkdir -p tooling && tar -C tooling --strip-components=1 -xzf tooling.tar.gz
+      cp -R tooling/packaging tooling/tests tooling/test .
+    - bash packaging/gitlab-registry-transfer.sh down "actflow_dependencies_package_${PKG_ARCH}.tar.gz" "actflow_dependencies_package_${PKG_ARCH}.tar.gz"
+  script:
+    - bash packaging/000-check_arch_level.sh
+    - mkdir install
+    - tar -C install -xf actflow_dependencies_package_*.tar.gz
+    - export ACT_HOME=$(pwd)/install/act
+    - bash packaging/006-test.sh
+  parallel:
+    matrix:
+      - DISTRO_IMAGE: ${TART_IMAGES}/macos-monterey-vanilla:latest    # 12, the deployment target floor
+      - DISTRO_IMAGE: ${TART_IMAGES}/macos-ventura-vanilla:latest     # 13
+      - DISTRO_IMAGE: ${TART_IMAGES}/macos-sonoma-vanilla:latest      # 14
+      - DISTRO_IMAGE: ${TART_IMAGES}/macos-sequoia-vanilla:latest     # 15, the build image's release
+      - DISTRO_IMAGE: ${TART_IMAGES}/macos-tahoe-vanilla:latest       # 26
+      - DISTRO_IMAGE: ${TART_IMAGES}/macos-golden-gate-vanilla:latest # 27
+
 # one release job per arch, each only linking its own packages, so a delayed or failed
 # arch still leaves the others released. 
 .release: &release
@@ -295,13 +385,14 @@ test:armv8.5-a:
   before_script:
     - apt-get -q update -y >/dev/null && apt-get -q install -y jq >/dev/null
   script:
-    - sh packaging/008-release.sh "${ACTFLOW_DEP_VERSION}" "${ARCH_LEVEL}"
+    - sh packaging/008-release.sh "${ACTFLOW_DEP_VERSION}" "${PKG_ARCH}"
 
 release:x86-64-v2:
   <<: *release
   needs: ["prepare:sources", "build:x86-64-v2", "test:x86-64-v2"]
   variables:
     ARCH_LEVEL: x86-64-v2
+    PKG_ARCH: x86-64-v2
     GIT_SUBMODULE_STRATEGY: none
 
 release:x86-64-v3:
@@ -309,6 +400,7 @@ release:x86-64-v3:
   needs: ["prepare:sources", "build:x86-64-v3", "test:x86-64-v3"]
   variables:
     ARCH_LEVEL: x86-64-v3
+    PKG_ARCH: x86-64-v3
     GIT_SUBMODULE_STRATEGY: none
 
 release:x86-64-v4:
@@ -316,6 +408,7 @@ release:x86-64-v4:
   needs: ["prepare:sources", "build:x86-64-v4", "test:x86-64-v4"]
   variables:
     ARCH_LEVEL: x86-64-v4
+    PKG_ARCH: x86-64-v4
     GIT_SUBMODULE_STRATEGY: none
 
 # arch-independent (only links the arm packages), so it stays on the container runners
@@ -324,6 +417,15 @@ release:armv8.5-a:
   needs: ["prepare:sources", "build:armv8.5-a", "test:armv8.5-a"]
   variables:
     ARCH_LEVEL: armv8.5-a
+    PKG_ARCH: armv8.5-a
+    GIT_SUBMODULE_STRATEGY: none
+
+# arch-independent (only links the applem1 packages), so it stays on the container runners
+release:applem1:
+  <<: *release
+  needs: ["prepare:sources", "build:applem1", "test:applem1"]
+  variables:
+    PKG_ARCH: applem1
     GIT_SUBMODULE_STRATEGY: none
 
 # Retention sweep: one job for all arches, gated on a successful release
@@ -341,6 +443,7 @@ cleanup:packages:
     - release:x86-64-v3
     - release:x86-64-v4
     - release:armv8.5-a
+    - release:applem1
   before_script:
     - apt-get -q update -y >/dev/null && apt-get -q install -y jq >/dev/null
   script:

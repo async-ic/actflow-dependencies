@@ -16,6 +16,8 @@
 
 # deps: 007-gcc | used by: 012-libedit, 020-readline
 
+source packaging/relocate.sh
+
 echo "#############################"
 echo "# ncurses"
 cd $EDA_SRC/org-debian-ncurses
@@ -45,7 +47,7 @@ common_cfg=(
   --without-debug
   --prefix "$ACT_HOME"
   CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}"
-  LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib"
+  LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}"
 )
 
 # Two-pass build for compiled-in terminfo fallbacks:
@@ -58,6 +60,11 @@ common_cfg=(
 ./configure "${common_cfg[@]}" || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1
+
+# pass 2 runs the tic just installed here, which loads the libtinfo installed next to it.
+# Without a portable rpath it resolves the host's /lib64/libtinfo.so.6 instead and dies on
+# a missing symbol, so relocate now rather than only in the final pass.
+relocate_tree "$ACT_HOME"
 
 # pass 2: regenerate with fallbacks using the just-installed 6.6 tic/infocmp. MKfallback
 # reads the freshly compiled entries via `infocmp -A <tmpdir>` (explicit path), so the

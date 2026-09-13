@@ -16,6 +16,8 @@
 
 # deps: 005-cmake | used by: downstream ACT tools (runtime); not a trilinos/xyce TPL here
 
+source packaging/relocate.sh
+
 echo "#############################"
 echo "# fmt"
 cd $EDA_SRC/org-fmtlib-fmt
@@ -31,9 +33,9 @@ cmake \
 -D CMAKE_BUILD_TYPE=Release \
 -D CMAKE_POSITION_INDEPENDENT_CODE=TRUE \
 -D BUILD_SHARED_LIBS=TRUE \
--D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
--D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+-D CMAKE_EXE_LINKER_FLAGS="-L${ACT_HOME}/lib" \
+-D CMAKE_SHARED_LINKER_FLAGS="-L${ACT_HOME}/lib" \
  .. || exit 1
-sed -i 's/\/lib64/\/lib/g' cmake_install.cmake
+sed_i 's/\/lib64/\/lib/g' cmake_install.cmake
 make -j$MAKE_JOBS || exit 1
 make install || exit 1

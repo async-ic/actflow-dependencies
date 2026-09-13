@@ -20,6 +20,15 @@ echo "#### openblas test for linking errors ####"
 echo
 source tests/test_helper.sh
 
-lookup_shared_library "libblas.so"
-lookup_shared_library "liblapack.so"
-lookup_shared_library "libopenblas.so"
+# macOS gets libblas/liblapack as re-export shims over the base system Accelerate
+# framework instead of from openblas, which needs a Fortran compiler (build_scripts/054)
+if [ "$(uname -s)" = "Darwin" ]; then
+	lookup_shared_library "libblas${SOEXT}"
+	lookup_shared_library "liblapack${SOEXT}"
+	echo "skip libopenblas${SOEXT}: macOS uses the Accelerate shims above"
+	exit 0
+fi
+
+lookup_shared_library "libblas${SOEXT}"
+lookup_shared_library "liblapack${SOEXT}"
+lookup_shared_library "libopenblas${SOEXT}"

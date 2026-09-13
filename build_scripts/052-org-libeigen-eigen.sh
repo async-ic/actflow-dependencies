@@ -19,6 +19,10 @@
 echo "#############################"
 echo "# eigen"
 
+# eigen's bundled LAPACK needs a Fortran compiler, which macOS does not have under the
+# "ship only what we compiled" rule; it also links brew's libgfortran when one is present.
+EIGEN_LAPACK="-D EIGEN_BUILD_LAPACK=OFF"
+
 cd $EDA_SRC/org-libeigen-eigen
 cp COPYING.README $ACT_HOME/license/LICENSE_org-libeigen-eigen
 cat COPYING.* >> $ACT_HOME/license/LICENSE_org-libeigen-eigen
@@ -31,11 +35,12 @@ cmake \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
 -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
--D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
--D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+-D CMAKE_EXE_LINKER_FLAGS="-L${ACT_HOME}/lib" \
+-D CMAKE_SHARED_LINKER_FLAGS="-L${ACT_HOME}/lib" \
 -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
 -D CMAKE_BUILD_TYPE=Release \
 -D FFTW_LIBRARIES=$ACT_HOME/lib \
+${EIGEN_LAPACK} \
 .. || exit 1
 make -j$MAKE_JOBS || exit 1
 make install || exit 1

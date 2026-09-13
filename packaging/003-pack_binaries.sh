@@ -27,13 +27,15 @@ echo "#### package the ACT_HOME install ####"
 echo
 if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
+source packaging/relocate.sh
+
 # move to the folder above act_home so the pathes inside the tar are nice
 WORK_DIR=$(pwd)
 # reuse the pipeline-wide version (set in 001) so the name matches the registry key
 VERSION="$(head -n1 actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="${CI_COMMIT_SHORT_SHA:-local}"
-PKG="actflow_dependencies_package_${ARCH_LEVEL:-unknown-arch}_${VERSION}.tar.gz"
+PKG="actflow_dependencies_package_${PKG_ARCH:-${ARCH_LEVEL:-unknown-arch}}_${VERSION}.tar.gz"
 cp actflow_dep.version $ACT_HOME/
 cd $ACT_HOME/..
 # pipe not tar -I -> centos7
-tar -cf - $(realpath --relative-to ./ $ACT_HOME) | gzip -9 > "$WORK_DIR/$PKG"
+tar -cf - "$(rel_path "$(pwd)" "$ACT_HOME")" | gzip -9 > "$WORK_DIR/$PKG"
 ls -lh "$WORK_DIR/$PKG"

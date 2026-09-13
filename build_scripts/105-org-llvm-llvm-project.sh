@@ -29,6 +29,9 @@
 #   manager (needed by `opt -load libfluid.so -pipelink`) was removed in LLVM 17.
 # - dylib disabled (LLVM_BUILD_LLVM_DYLIB=OFF): nothing links libLLVM; opt/clang
 #   link the static libs.
+# - Sources come from the org-llvm-llvm-project-14 submodule, pinned at llvmorg-14.0.6
+#   for the reasons below. The unsuffixed submodule tracks the current llvm release and
+#   supplies the OpenMP runtime in 008 - it is far too new for fluid.
 # - Isolation: installs under $ACT_HOME/llvm, NOT $ACT_HOME/bin, so this outdated
 #   clang is never on the build PATH (only $ACT_HOME/bin is) and no other dep /
 #   actflow build can pick it up. Consumers opt in via -DLLVM_DIR; runtime adds
@@ -45,23 +48,29 @@
 echo "#############################"
 echo "#build llvm"
 
-cd $EDA_SRC/org-llvm-llvm-project || exit 1
+cd $EDA_SRC/org-llvm-llvm-project-14 || exit 1
 cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
 
   #echo "no CI => building, this will take a long time"
   if [ ! -d build ]; then
 	mkdir build
   fi
-  cd $EDA_SRC/org-llvm-llvm-project/build || exit 1
+  cd $EDA_SRC/org-llvm-llvm-project-14/build || exit 1
   export LD_LIBRARY_PATH=$ACT_HOME/lib
+  # macOS has no usable equivalent: DYLD_LIBRARY_PATH overrides lookups by leaf name even
+  # for absolute paths, so exporting it makes cmake load the bundle's libz.1.dylib in place
+  # of the /usr/lib one it was built against, and cmake segfaults. Give the build-time
+  # tools an rpath into the bundle instead; relocate_tree rewrites the installed copies.
+  LLVM_RPATH=""
+  [ "$(uname -s)" = "Darwin" ] && LLVM_RPATH=" -Wl,-rpath,${ACT_HOME}/lib"
   cmake \
   -D LLVM_ENABLE_RTTI=ON \
   -D CMAKE_INSTALL_PREFIX=$ACT_HOME/llvm \
   -D CMAKE_INCLUDE_PATH=$ACT_HOME/include \
   -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
   -D CMAKE_CXX_FLAGS="${CXXFLAGS} -include cstdint" \
-  -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
-  -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+  -D CMAKE_EXE_LINKER_FLAGS="-L${ACT_HOME}/lib${LLVM_RPATH}" \
+  -D CMAKE_SHARED_LINKER_FLAGS="-L${ACT_HOME}/lib${LLVM_RPATH}" \
   -D LLVM_INCLUDE_BENCHMARKS=OFF \
   -D CMAKE_BUILD_TYPE=Release \
   -D LLVM_BUILD_LLVM_DYLIB=OFF \
@@ -83,10 +92,15 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   # Only builtins+crt (no sanitizers/profile/etc); COMPILER_*_WORKS bypass the C++/link
   # probes (clang-14 can't link the gcc16 libstdc++ default, and builtins/crt are C/asm
   # objects only, never linked here). RESDIR = <prefix>/lib/clang/<ver>.
+  # host runtime only: COMPILER_RT_ENABLE_IOS is on by default and adds the ios, iossim
+  # and cc_kext_ios archives; DARWIN_osx_SKIP_CC_KEXT drops the osx kext one. Nothing here
+  # links any of them. watchos/tvos already default off.
+  CRT_DARWIN_OFF=""
+  [ "$(uname -s)" = "Darwin" ] && CRT_DARWIN_OFF="-D COMPILER_RT_ENABLE_IOS=OFF -D DARWIN_osx_SKIP_CC_KEXT=ON"
   CLANG_RT=$ACT_HOME/llvm/bin/clang
   RESDIR=$("$CLANG_RT" -print-resource-dir)
-  mkdir -p $EDA_SRC/org-llvm-llvm-project/build-compiler-rt
-  cd $EDA_SRC/org-llvm-llvm-project/build-compiler-rt || exit 1
+  mkdir -p $EDA_SRC/org-llvm-llvm-project-14/build-compiler-rt
+  cd $EDA_SRC/org-llvm-llvm-project-14/build-compiler-rt || exit 1
   cmake \
   -D CMAKE_C_COMPILER="$CLANG_RT" \
   -D CMAKE_CXX_COMPILER="$ACT_HOME/llvm/bin/clang++" \
@@ -108,9 +122,17 @@ cp llvm/LICENSE.TXT $ACT_HOME/license/LICENSE_org-llvm-llvm-project
   -D COMPILER_RT_BUILD_ORC=OFF \
   -D COMPILER_RT_INCLUDE_TESTS=OFF \
   -D CMAKE_INSTALL_PREFIX="$RESDIR" \
+  ${CRT_DARWIN_OFF} \
   -G "Unix Makefiles" \
   ../compiler-rt
-  make -j$MAKE_JOBS builtins crt || exit 1
-  make install-builtins install-crt || exit 1
+  # crt (crtbegin/crtend) is ELF-only; compiler-rt defines no such target on mach-o
+  CRT_BUILD="builtins crt"
+  CRT_INSTALL="install-builtins install-crt"
+  if [ "$(uname -s)" = "Darwin" ]; then
+    CRT_BUILD="builtins"
+    CRT_INSTALL="install-builtins"
+  fi
+  make -j$MAKE_JOBS $CRT_BUILD || exit 1
+  make $CRT_INSTALL || exit 1
 unset LD_LIBRARY_PATH
 

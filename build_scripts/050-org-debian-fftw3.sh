@@ -27,7 +27,6 @@ cat COPYING >> $ACT_HOME/license/LICENSE_org-debian-fftw
 ./configure --prefix=$ACT_HOME \
  CFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib -fPIC ${CFLAGS}" \
  CPPFLAGS="-I${ACT_HOME}/include -L${ACT_HOME}/lib -fPIC" \
- LDFLAGS="-L${ACT_HOME}/lib -Wl,-rpath=\\$\$ORIGIN/../lib"  || exit 1
+ LDFLAGS="-L${ACT_HOME}/lib ${LDFLAGS}"  || exit 1
 make -j$MAKE_JOBS  || exit 1
 make install  || exit 1
-

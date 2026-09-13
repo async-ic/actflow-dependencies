@@ -21,6 +21,8 @@
 # => galois (backend tools)
 
 echo 
+source packaging/relocate.sh
+
 echo "#### MPICH ####"
 echo
 
@@ -29,17 +31,22 @@ cp COPYRIGHT $ACT_HOME/license/LICENSE_org-pmodels-mpich
 
 # accept host libtool 2.4.2 (mpich ships its own 2.4.4 files, not overwritten).
 # automake >=1.15 comes from 008.
-sed -i 's/ver=2.4.4/ver=2.4.2/' autogen.sh
+sed_i 's/ver=2.4.4/ver=2.4.2/' autogen.sh
+
+# no Fortran compiler on macOS (see 007/054); nothing downstream uses the MPI Fortran
+# bindings, trilinos and xyce build with Fortran off there too
+MPICH_FORTRAN=--enable-fortran=all
+[ "$(uname -s)" = "Darwin" ] && MPICH_FORTRAN=--disable-fortran
 
 ./autogen.sh
 ./configure \
     --prefix=$ACT_HOME \
     --enable-fast=O3 \
-    --enable-fortran=all \
+    $MPICH_FORTRAN \
     --enable-cxx \
     --enable-threads=runtime \
     CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" \
-    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" \
+    LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}" \
     FFLAGS="-fallow-argument-mismatch ${FFLAGS}" \
     FCFLAGS="-fallow-argument-mismatch ${FCFLAGS}" || exit 1
 make -j2 || exit 1

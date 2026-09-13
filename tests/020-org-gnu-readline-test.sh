@@ -20,5 +20,5 @@ echo "# libreadline test for linking errors"
 
 source tests/test_helper.sh
 
-lookup_shared_library "libhistory.so"
-lookup_shared_library "libreadline.so"
+lookup_shared_library "libhistory${SOEXT}"
+lookup_shared_library "libreadline${SOEXT}"

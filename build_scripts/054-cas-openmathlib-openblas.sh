@@ -16,6 +16,37 @@
 
 # deps: 007-gcc | used by: 060-trilinos (BLAS/LAPACK); provides libblas/liblapack symlinks
 
+# macOS has no Fortran compiler available under the "ship only what we compiled" rule
+# (gcc has no aarch64-darwin target), and OpenBLAS's LAPACK half is Fortran. The base
+# system's Accelerate framework provides the same Fortran-ABI BLAS+LAPACK and ships with
+# every macOS release.
+#
+# Accelerate cannot be handed to consumers as a library, though: cmake treats
+# "-framework Accelerate" as a library list and renders it -lAccelerate, and tribits
+# rejects the framework path outright ("not a valid lib file name") because it is neither
+# lib<name>.<ext> nor a bare name. Frameworks also have no file on disk to link against,
+# they live in the dyld shared cache.
+#
+# So build the libblas/liblapack this tree expects as shims that re-export the framework.
+# Consumers then link -lblas/-llapack exactly as on linux and need no macOS-specific
+# flags. Only the shim is shipped - Apple's code is not redistributed, the shim just
+# records a load path into /System, which every macOS release provides.
+if [ "$(uname -s)" = "Darwin" ]; then
+	echo "#############################"
+	echo "# BLAS/LAPACK (Accelerate re-export shims)"
+	mkdir -p $ACT_HOME/lib
+	SHIM_SRC=$EDA_SRC/accelerate_shim.c
+	: > $SHIM_SRC
+	for lib in blas lapack; do
+		clang -dynamiclib -o $ACT_HOME/lib/lib${lib}${SOEXT} $SHIM_SRC \
+			-Wl,-reexport_framework,Accelerate \
+			-install_name @rpath/lib${lib}${SOEXT} || exit 1
+	done
+	rm -f $SHIM_SRC
+	ls -l $ACT_HOME/lib/libblas${SOEXT} $ACT_HOME/lib/liblapack${SOEXT}
+	exit 0
+fi
+
 echo "#############################"
 echo "# BLAS"
 
@@ -53,9 +84,9 @@ case "$ARCH_LEVEL" in
 	*) OPENBLAS_TARGET= ;;
 esac
 
-make -j$MAKE_JOBS TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=32 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS} -Wl,-rpath=\\\$\$ORIGIN/../lib" || exit 1
+make -j$MAKE_JOBS TARGET=$OPENBLAS_TARGET DYNAMIC_ARCH=1 NUM_THREADS=32 USE_OPENMP=1 CPPFLAGS="-I$ACT_HOME/include ${CPPFLAGS}" LDFLAGS="-L$ACT_HOME/lib ${LDFLAGS}" || exit 1
 make PREFIX=$ACT_HOME install  || exit 1
 cd $ACT_HOME/lib/
-ln -s libopenblas.so libblas.so
-ln -s libopenblas.so liblapack.so
+ln -s libopenblas${SOEXT} libblas${SOEXT}
+ln -s libopenblas${SOEXT} liblapack${SOEXT}
 

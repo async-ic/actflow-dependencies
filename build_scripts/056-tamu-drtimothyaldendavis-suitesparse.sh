@@ -27,8 +27,8 @@ cmake \
  -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
 -D CMAKE_INSTALL_LIBDIR=lib \
  -D CMAKE_BUILD_TYPE=Release \
- -D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
- -D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+ -D CMAKE_EXE_LINKER_FLAGS="-L${ACT_HOME}/lib" \
+ -D CMAKE_SHARED_LINKER_FLAGS="-L${ACT_HOME}/lib" \
  -D CMAKE_POSITION_INDEPENDENT_CODE=ON \
  $EDA_SRC/sandia-xyce-xyce/cmake/trilinos/AMD  || exit 1
 cmake --build . -t install  || exit 1

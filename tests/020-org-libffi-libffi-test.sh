@@ -20,4 +20,4 @@ echo "# libffi test for linking errors"
 
 source tests/test_helper.sh
 
-lookup_shared_library "libffi.so"
+lookup_shared_library "libffi${SOEXT}"

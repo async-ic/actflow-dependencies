@@ -23,9 +23,18 @@ source tests/test_helper.sh
 # gcc builds libquadmath only where it provides __float128: i386/x86_64, ia64,
 # loongarch, hppa and ppc64. aarch64 has none (long double is binary128 there),
 # so the lib can never be packaged for it.
+# macOS builds with the system clang and has no gcc at all (build_scripts/007): the
+# OpenMP runtime is LLVM's libomp from 008, and there is no Fortran runtime because
+# nothing Fortran is built.
+if [ "$(uname -s)" = "Darwin" ]; then
+	echo "skip gcc runtime libs: macOS builds with clang, see the libomp check below"
+	lookup_shared_library "libomp${SOEXT}"
+	exit 0
+fi
+
 case "$(uname -m)" in
-i?86 | x86_64) lookup_shared_library "libquadmath.so" ;;
-*) echo "skip libquadmath.so: not built by gcc on $(uname -m)" ;;
+i?86 | x86_64) lookup_shared_library "libquadmath${SOEXT}" ;;
+*) echo "skip libquadmath${SOEXT}: not built by gcc on $(uname -m)" ;;
 esac
-lookup_shared_library "libgfortran.so"
-lookup_shared_library "libgomp.so"
+lookup_shared_library "libgfortran${SOEXT}"
+lookup_shared_library "libgomp${SOEXT}"

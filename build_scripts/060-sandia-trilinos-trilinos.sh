@@ -20,6 +20,26 @@ echo
 echo "#### trilinos ####"
 echo
 
+# macOS: no Fortran compiler (see 007), and BLAS/LAPACK come from the base system's
+# Accelerate framework via the libblas/liblapack re-export shims 054 builds, which the
+# default BLAS_LIBRARY_NAMES/LAPACK_LIBRARY_NAMES find unaided.
+TRILINOS_FORTRAN="-D CMAKE_Fortran_COMPILER=mpif90"
+# With Fortran off, aztecoo compiles its f2c-translated C instead (az_c_util.c,
+# az_c_reorder.c). That code predates C99 and calls BLAS and its own helpers without
+# prototypes. Two things have to line up for it to build:
+#   -std=gnu17  mpich bakes -std=gnu23 into the mpicc wrapper, and C23 removed implicit
+#               function declarations outright, so there is no diagnostic left to demote.
+#               This comes after mpicc's own flag and wins.
+#   -Wno-error  clang 16+ raised the C17 diagnostic from warning to error.
+# Both are needed; neither alone compiles. 057 already demotes pointer types the same way.
+TRILINOS_C_COMPAT=""
+[ "$(uname -s)" = "Darwin" ] && TRILINOS_C_COMPAT="-std=gnu17 -Wno-error=implicit-function-declaration"
+TRILINOS_FORTRAN_FLAGS=(-D "CMAKE_Fortran_FLAGS=-O3 -fPIC ${FFLAGS}")
+if [ "$(uname -s)" = "Darwin" ]; then
+	TRILINOS_FORTRAN="-D Trilinos_ENABLE_Fortran=OFF"
+	TRILINOS_FORTRAN_FLAGS=()
+fi
+
 cd $EDA_SRC/sandia-trilinos-trilinos
 if [ ! -d build ]; then
 	mkdir build
@@ -37,10 +57,10 @@ cmake \
 -G "Unix Makefiles" \
 -D CMAKE_C_COMPILER=mpicc \
 -D CMAKE_CXX_COMPILER=mpicxx \
--D CMAKE_Fortran_COMPILER=mpif90 \
+${TRILINOS_FORTRAN} \
 -D CMAKE_CXX_FLAGS="-O3 -fPIC ${CXXFLAGS}" \
--D CMAKE_C_FLAGS="-O3 -fPIC ${CFLAGS}" \
--D CMAKE_Fortran_FLAGS="-O3 -fPIC ${FFLAGS}" \
+-D CMAKE_C_FLAGS="-O3 -fPIC ${TRILINOS_C_COMPAT} ${CFLAGS}" \
+"${TRILINOS_FORTRAN_FLAGS[@]}" \
 -D CMAKE_MAKE_PROGRAM="make" \
 -D Trilinos_ENABLE_NOX=ON \
 -D NOX_ENABLE_LOCA=ON \
@@ -88,8 +108,8 @@ cmake \
 -D TPL_ENABLE_BLAS=ON \
 -D TPL_ENABLE_LAPACK=ON \
 -D TPL_ENABLE_MPI=ON \
--D CMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
--D CMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,'\$ORIGIN/../lib' -L${ACT_HOME}/lib" \
+-D CMAKE_EXE_LINKER_FLAGS="-L${ACT_HOME}/lib" \
+-D CMAKE_SHARED_LINKER_FLAGS="-L${ACT_HOME}/lib" \
 -D CMAKE_INSTALL_PREFIX=$ACT_HOME \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_LIBRARY_PATH=$ACT_HOME/lib \
