@@ -21,8 +21,8 @@ if [ -z "${SOEXT:-}" ]; then
   esac
 fi
 
-# mach-o inspection needs the xcode tools. The vanilla macOS test images carry none, so
-# there only the dyld run check below applies and each skip is logged.
+# mach-o inspection needs the xcode tools; the vanilla macOS images carry none, so there
+# only the dyld run check applies and each skip is logged.
 
 # lexical path normalisation, the part of "realpath -m" macOS does not provide
 norm_path () {
@@ -37,6 +37,35 @@ norm_path () {
   printf '%s' "${out:-/}"
 }
 
+# canonicalise the data volume firmlink to the spelling dyld prints; /System/Volumes/Data/x
+# and /x are one file, and no resolver collapses them
+strip_data_volume () {
+  case "$1" in
+  /System/Volumes/Data/*) printf '%s' "${1#/System/Volumes/Data}" ;;
+  /System/Volumes/Data) printf '/' ;;
+  *) printf '%s' "$1" ;;
+  esac
+}
+
+# physical path via cd + pwd -P, macOS having no "realpath -m"; falls back to the deepest
+# existing directory, then to the lexical form. Image comparisons resolve both sides this way
+# to match dyld; the path is taken as given, as norm_path breaks a relative $ACT_HOME.
+real_path () {
+  local p=$1 d b r
+  [ -n "$p" ] || { norm_path "$p"; return; }
+  if r=$(cd "$p" 2>/dev/null && pwd -P); then strip_data_volume "$r"; return; fi
+  d=$(dirname "$p"); b=$(basename "$p")
+  if r=$(cd "$d" 2>/dev/null && pwd -P); then
+    r=$(strip_data_volume "$r")
+    case "$r" in
+    /) printf '%s' "/$b" ;;
+    *) printf '%s' "$r/$b" ;;
+    esac
+    return
+  fi
+  norm_path "$p"
+}
+
 # in-place sed; BSD sed requires an explicit backup suffix, GNU sed rejects one
 sed_i () {
   if sed --version >/dev/null 2>&1; then
@@ -46,14 +75,11 @@ sed_i () {
   fi
 }
 
-# upstream drives the component suites with `make runtest`, whose whole body is
+# walk the component suites as upstream's `make runtest` does (act/scripts/Makefile.std):
 #   if [ -d test -a -x test/run.sh ]; then (cd test; ./run.sh); fi
-# recursed over the subdirectories (act/scripts/Makefile.std). It compiles nothing, and no
-# run.sh calls a compiler, so walk the same way with the shell: the vanilla macOS test
-# images carry no make - /usr/bin/make is the xcode-select shim, present but not usable -
-# and installing one would stop them being vanilla. Test directories added by later
-# releases are picked up on their own; the rule is upstream's. Suites nested deeper
-# (act/test/dl, chp2prs/test/*) are driven by their parent run.sh, as under make.
+# recursed over the subdirectories. Nothing here compiles, so the shell does it instead: the
+# vanilla macOS images have no usable make. Suites nested deeper (act/test/dl, chp2prs/test/*)
+# are driven by their parent run.sh, as under make.
 run_test_suites () {
   local root=$1 d rc=0
   for d in $(find "$root" -type d -name test | sort); do
@@ -68,15 +94,14 @@ run_test_suites () {
 # @loader_path rpath resolving to $ACT_HOME/lib (keeps the install relocatable).
 check_rpath_macho () {
   local file=$1
-  local act=$(norm_path "$ACT_HOME")
-  # otool must actually work, not merely exist: on a system without the xcode tools
-  # /usr/bin/otool is an xcode-select shim that is present, fails when run, and would
-  # otherwise leave this check silently passing on empty output
+  local act=$(real_path "$ACT_HOME")
+  # otool must run, not merely exist: without the xcode tools /usr/bin/otool is a shim that
+  # fails, which would leave this check silently passing on empty output
   if ! otool --version >/dev/null 2>&1; then
     echo "skip rpath check: otool not available (no xcode tools on this host)"
     return 0
   fi
-  local dir=$(dirname "$(norm_path "$file")")
+  local dir=$(dirname "$(real_path "$file")")
   local dep abs= entry exp
   # every non-system load must go through @rpath, an absolute one cannot survive a move
   for dep in $(otool -L "$file" 2>/dev/null | tail -n +2 | awk '{print $1}'); do
@@ -95,7 +120,7 @@ check_rpath_macho () {
   otool -L "$file" 2>/dev/null | tail -n +2 | grep -q '@rpath/' || return 0
   for entry in $(otool -l "$file" 2>/dev/null | awk '/LC_RPATH/{r=1} r&&/ path /{print $2; r=0}'); do
     exp=${entry//@loader_path/$dir}
-    [ "$(norm_path "$exp")" = "$act/lib" ] || continue
+    [ "$(real_path "$exp")" = "$act/lib" ] || continue
     if [ "$exp" != "$entry" ]; then   # changed -> @loader_path was present, relocatable
       echo "rpath ok: $file -> $entry"
       return 0
@@ -110,12 +135,12 @@ check_rpath_macho () {
   exit 1
 }
 
-# dyld is the ground truth and needs no tooling: launch the binary and assert it got
-# past image loading, and that every image it pulled in is the install or the base OS.
-# A binary still alive when the timer fires got past dyld, which is all this checks.
+# launch the binary and assert it got past image loading, and that every image it pulled in
+# is the install or the base OS. Needs no tooling; still alive when the timer fires is the
+# pass condition.
 lookup_binary_macho () {
   local file=$1
-  local act=$(norm_path "$ACT_HOME")
+  local act=$(real_path "$ACT_HOME")
   local tmp=$(mktemp) out bad pid watcher
   DYLD_PRINT_LIBRARIES=1 "$file" </dev/null >/dev/null 2>"$tmp" &
   pid=$!
@@ -132,25 +157,31 @@ lookup_binary_macho () {
     exit 1
     ;;
   esac
-  bad=$(printf '%s\n' "$out" | sed -n 's/^dyld\[[0-9]*\]: <[^>]*> //p')
+  # only this pid: DYLD_PRINT_LIBRARIES is inherited and children share the stderr
+  bad=$(printf '%s\n' "$out" | sed -n "s/^dyld\[$pid\]: <[^>]*> //p")
   if [ -z "$bad" ]; then
-    # stripped by the hardened runtime, or the binary loaded no image at all.
-    # The launch itself still passed.
+    # stripped by the hardened runtime, or no image was loaded; the launch still passed
     echo "skip image check: $file reported no loaded images"
     return 0
   fi
-  bad=$(printf '%s\n' "$bad" | grep -v -e "^$act/" -e '^/usr/lib/' -e '^/System/')
+  local img keep=""
+  while IFS= read -r img; do
+    case "$img" in
+    "$act"/* | /usr/lib/* | /System/* | /bin/* | /sbin/* | /usr/bin/* | /usr/sbin/* | /usr/libexec/*) continue ;;
+    esac
+    keep=$keep$img$'\n'
+  done <<<"$bad"
+  bad=${keep%$'\n'}
   if [ -n "$bad" ]; then
     echo "non-portable dependency: $file loads images outside the install and the base OS:"
-    printf '  %s\n' $bad
+    printf '%s\n' "$bad" | sed 's/^/  /'
     exit 1
   fi
   echo "loads ok: $file"
 }
 
-# assert an ELF that loads $ACT_HOME libs has an $ORIGIN-relative RPATH/RUNPATH
-# resolving to $ACT_HOME/lib (keeps the install relocatable); exits non-zero on
-# a missing or absolute-only rpath. ELFs using only system libs are skipped.
+# assert an ELF that loads $ACT_HOME libs carries an $ORIGIN-relative RPATH/RUNPATH resolving
+# to $ACT_HOME/lib (keeps the install relocatable); ELFs using only system libs are skipped.
 check_rpath () {
   if [ "$(uname -s)" = "Darwin" ]; then
     check_rpath_macho "$1"
