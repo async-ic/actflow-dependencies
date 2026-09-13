@@ -89,6 +89,12 @@ add_link() { # file_name
 
 ensure_release || exit 1
 
+# the sources signature; the tarball itself is linked when the release is created
+add_link "actflow_dependencies_sources.tar.gz.asc" || exit 1
+
 [ -n "$ARCH_LEVEL" ] || exit 0
-add_link "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" || exit 1
-add_link "actflow_dependencies_package_testing-${ARCH_LEVEL}.tar.gz" || exit 1
+for pkg in "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" \
+           "actflow_dependencies_package_testing-${ARCH_LEVEL}.tar.gz"; do
+  add_link "$pkg" || exit 1
+  add_link "$pkg.asc" || exit 1
+done

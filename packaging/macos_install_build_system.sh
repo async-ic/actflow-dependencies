@@ -12,5 +12,5 @@ set -eu
 xcode-select -p >/dev/null || { echo "Xcode command line tools not available"; exit 1; }
 echo "xcode $(xcodebuild -version 2>/dev/null | head -n1), sdk $(xcrun --show-sdk-version)"
 
-brew install m4 autoconf automake bison flex gperf libtool python3 texinfo help2man gettext gmp mpfr libmpc isl
+brew install m4 autoconf automake bison flex gperf libtool python3 texinfo help2man gettext gmp mpfr libmpc isl gnupg
 echo "install done"

@@ -28,6 +28,7 @@ echo
 if [ -d "../packaging" ]; then echo "please exec from repository root (one folder up)"; exit 1; fi
 
 source packaging/relocate.sh
+source packaging/sign.sh
 
 # move to the folder above act_home so the pathes inside the tar are nice
 WORK_DIR=$(pwd)
@@ -39,3 +40,4 @@ cd $ACT_HOME/..
 # pipe not tar -I -> centos7
 tar -cf - "$(rel_path "$(pwd)" "$ACT_HOME")" | gzip -9 > "$WORK_DIR/$PKG"
 ls -lh "$WORK_DIR/$PKG"
+gpg_sign "$WORK_DIR/$PKG"

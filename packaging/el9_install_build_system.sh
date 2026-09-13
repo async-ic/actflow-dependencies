@@ -12,5 +12,5 @@ $SUDO dnf install -y epel-release
 echo "repo setup"
 # gmp/mpfr/mpc/zlib devel: needed to configure/build the gcc bootstrap in 007-org-gnu-gcc.sh
 # patchelf: the portable-install pass (packaging/relocate.sh) sets every rpath with it
-$SUDO dnf install -y gcc gcc-c++ gcc-gfortran m4 autoconf automake bison flex gperf libtool python3 tcsh patch texinfo help2man gettext-devel po4a which gmp-devel mpfr-devel libmpc-devel zlib-devel patchelf gzip
+$SUDO dnf install -y gcc gcc-c++ gcc-gfortran m4 autoconf automake bison flex gperf libtool python3 tcsh patch texinfo help2man gettext-devel po4a which gmp-devel mpfr-devel libmpc-devel zlib-devel patchelf gzip gnupg2
 echo "install done"

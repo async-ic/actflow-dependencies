@@ -43,14 +43,20 @@ send() { # file url
   curl --fail --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "$1" "$2"
 }
 
+# a detached signature travels with its tarball, so no call site has to name it
 case "${1:-}" in
   up)
     retry send "$2" "${BASE_URL}/$3"
-    echo "uploaded $2 -> ${BASE_URL}/$3" ;;
+    echo "uploaded $2 -> ${BASE_URL}/$3"
+    [ -f "$2.asc" ] || exit 0
+    retry send "$2.asc" "${BASE_URL}/$3.asc"
+    echo "uploaded $2.asc -> ${BASE_URL}/$3.asc" ;;
   down)
     command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || \
       { echo "registry: need curl or wget (install it in the CI before_script)" >&2; exit 1; }
     retry fetch "${BASE_URL}/$2" "$3"
-    echo "downloaded ${BASE_URL}/$2 -> $3" ;;
+    echo "downloaded ${BASE_URL}/$2 -> $3"
+    # the signature is optional
+    fetch "${BASE_URL}/$2.asc" "$3.asc" 2>/dev/null || rm -f "$3.asc" ;;
   *) echo "usage: $0 up <file> <name> | down <name> <file>" >&2; exit 1 ;;
 esac

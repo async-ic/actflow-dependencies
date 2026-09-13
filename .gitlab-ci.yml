@@ -39,6 +39,9 @@ variables:
   # arm64 tart VM images from lo
   TART_IMAGES: ${CI_REGISTRY}/mirror/cirruslabs/images
 
+  # The signing key is a protected file variable, present on the default branch and on
+  # tags only; packaging/sign.sh signs when it is there.
+
 # sources for build + tarball required for copyleft-licenses.
 prepare:sources:
   stage: prepare

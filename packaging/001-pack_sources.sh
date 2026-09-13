@@ -74,4 +74,6 @@ fi
 # pipe not tar -I: centos7 tar 1.26 passes "gzip -9" as one exec name and fails
 tar --exclude-vcs --exclude='./actflow_dependencies_sources_*.tar.gz' -cf - ./* | gzip -9 > "actflow_dependencies_sources_${VERSION}.tar.gz"
 ls -lh "actflow_dependencies_sources_${VERSION}.tar.gz"
+source packaging/sign.sh
+gpg_sign "actflow_dependencies_sources_${VERSION}.tar.gz"
 
