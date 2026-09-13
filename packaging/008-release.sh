@@ -91,4 +91,4 @@ ensure_release || exit 1
 
 [ -n "$ARCH_LEVEL" ] || exit 0
 add_link "actflow_dependencies_package_${ARCH_LEVEL}.tar.gz" || exit 1
-add_link "actflow_dependencies_testing_package_${ARCH_LEVEL}.tar.gz" || exit 1
+add_link "actflow_dependencies_package_testing-${ARCH_LEVEL}.tar.gz" || exit 1

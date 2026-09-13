@@ -35,7 +35,9 @@ source packaging/relocate.sh
 WORK_DIR=$(pwd)
 # reuse the pipeline-wide version (set in 001) so the name matches the registry key
 VERSION="$(head -n1 actflow_dep.version 2>/dev/null)"; [ -n "$VERSION" ] || VERSION="${CI_COMMIT_SHORT_SHA:-local}"
-PKG="actflow_dependencies_testing_package_${PKG_ARCH:-${ARCH_LEVEL:-unknown-arch}}_${VERSION}.tar.gz"
+# one name rule for every package: actflow_dependencies_package_<PKG_ARCH>, where the
+# testing variant is its own arch token (testing-x86-64-v2, testing-applem1, ...)
+PKG="actflow_dependencies_package_testing-${PKG_ARCH:-${ARCH_LEVEL:-unknown-arch}}_${VERSION}.tar.gz"
 # marker already relocated into $ACT_HOME by the base pack (003); do not re-move
 cd $ACT_HOME/..
 # pipe not tar -I -> centos7
