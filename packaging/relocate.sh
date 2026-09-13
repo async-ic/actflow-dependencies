@@ -129,14 +129,17 @@ _relocate_macho() {
 assert_portable_install() {
 	local root=${1:-$ACT_HOME} bad
 	[ "$(uname -s)" = "Darwin" ] || return 0
-	# the loop runs in a pipeline subshell, so it reports through its stdout
+	# the loop runs in a pipeline subshell, so it reports through its stdout.
+	# the case patterns below need their optional leading "(": bash 3.2, the macOS
+	# /bin/bash, extracts $( ... ) by counting parens, so a bare pattern ")" ends the
+	# substitution early and the ";;" that follows is a syntax error.
 	bad=$(find "$root" -type f | while IFS= read -r f; do
 		is_macho "$f" || continue
 		for dep in $(otool -L "$f" 2>/dev/null | tail -n +2 | awk '{print $1}'); do
 			case "$dep" in
-			"$root"/*) echo "not relocated: ${f#$root/} -> $dep" ;;
-			@* | /usr/lib/* | /System/*) ;;
-			*) echo "foreign dependency: ${f#$root/} -> $dep" ;;
+			("$root"/*) echo "not relocated: ${f#$root/} -> $dep" ;;
+			(@* | /usr/lib/* | /System/*) ;;
+			(*) echo "foreign dependency: ${f#$root/} -> $dep" ;;
 			esac
 		done
 	done)
